@@ -9,7 +9,7 @@ class TaskState:
     STATE_TOPIC = '/state'
     DESIRED_POSE_TOPIC = 'controls/desire_pose'
     DESIRED_TWIST_VELOCITY_TOPIC = 'controls/desired_twist'
-    CV_DATA_TOPICS = []
+    CV_TOPICS = []
 
     def __init__(self):
         self.state_listener = Node.create_subscription(Odometry, self.STATE_TOPIC, self._on_receive_state,)
@@ -25,4 +25,4 @@ class TaskState:
 
     
     def _on_receive_cv_data(self, cv_data):
-        self.cv_data[CVObject.header.something] = cv_data
+        self.cv_data[CVObject.header.frame_id] = cv_data
