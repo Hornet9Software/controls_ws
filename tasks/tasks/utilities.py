@@ -17,6 +17,7 @@ from typing import Union, List, Dict
 from std_msgs.msg import Header
 from rclpy.logging import get_logger
 
+
 def linear_distance(p1 : Point, p2 : Point) -> float:
     # Linear distance between 2 points
     v1 = np.array([p1.x, p1.y, p1.z])
@@ -25,6 +26,7 @@ def linear_distance(p1 : Point, p2 : Point) -> float:
     # Vector math. Subtract 2 vectors and obtain the length of resulting vector
     distance = np.linalg.norm(v2 - v1)
     return distance
+
 
 def angular_distance_quat(q1 : Quaternion, q2 : Quaternion) -> Vector3:
     # A quaternion consists of q=a+bi+cj+dk
@@ -37,6 +39,7 @@ def angular_distance_quat(q1 : Quaternion, q2 : Quaternion) -> Vector3:
 
     return angular_distance_rpy(rpy1, rpy2)
 
+
 def angular_distance_rpy(rpy1 : tuple[float, float, float], rpy2 : tuple[float, float, float]) -> Vector3:
     # Find difference between 2 RPYs
     roll = np.fabs(rpy1[0] - rpy2[0])
@@ -44,15 +47,17 @@ def angular_distance_rpy(rpy1 : tuple[float, float, float], rpy2 : tuple[float, 
     yaw = np.fabs(rpy1[2] - rpy2[2])
     return Vector3(roll, pitch, yaw)
 
+
 def reached_pose(current_pose : Pose, desired_pose : Pose, linear_tolerance = 0.1, angular_tolerance = 3) -> bool:
     # Compute linear distance between 2 points and check if it is within tolerance
     # Because we used vectors, sign does not matter!
     linear = linear_distance(current_pose.position, desired_pose.position) < linear_tolerance
     # Obtain RPY difference
     angular_dist = angular_distance_quat(current_pose.orientation, desired_pose.orientation)
-    # Check if each of them are lesser than the tolerance
+    # Check if all of them are lesser than the tolerance
     angular = np.all(np.array([angular_dist.x, angular_dist.y, angular_dist.z]) < (np.ones(3) * angular_tolerance))
     return linear and angular
+
 
 def at_desired_velocity(current_twist : Twist, desired_twist : Twist, linear_tolerance = 0.1, angular_tolerance = 0.3) -> bool:
     # Check if travelling at desired velocity
@@ -64,6 +69,7 @@ def at_desired_velocity(current_twist : Twist, desired_twist : Twist, linear_tol
     angular_des_velocity = np.linalg.norm([desired_twist.angular.x, desired_twist.angular.y, desired_twist.angular.z])
     angular = np.fabs(angular_curr_velocity - angular_des_velocity) < angular_tolerance
     return linear and angular
+
 
 def stopped_at_pose(current_pose : Pose, desired_pose : Pose, current_twist : Twist) -> bool:
     at_desired_pose = reached_pose(current_pose, desired_pose, 0.2, 12)
@@ -79,7 +85,6 @@ def transform_pose(listener, base_frame, target_frame, pose : Pose):
     pose_stamped.header.frame_id = base_frame
 
     return listener.transformPose(target_frame, pose_stamped).pose
-
 
 
 def transform(origin_frame : str, dest_frame : str, poseORodom : Union[Pose, PoseStamped, Odometry]) -> Union[Pose, PoseStamped, Odometry]:
@@ -181,14 +186,14 @@ def cv_object_position(cv_obj_data):
 
 class ObjectVisibleTask(Task):
     def __init__(self, image_name, timeout):
-        super().__init__(outcomes=['undetected', 'detected'], input_keys=['image_name'], output_keys=['image_name'])
+        super().__init__(task_name=image_name, outcomes=['undetected', 'detected'], input_keys=['image_name'], output_keys=['image_name'])
 
         self.image_name = image_name
         self.timeout = timeout
 
     def run(self, ud):
         milli_secs = 10
-        rate = Node().create_rate(milli_secs)
+        rate = self.task_state.create_rate(milli_secs)
         total = 0
         while total < self.timeout * 1000:
             if cv_object_position(self.cv_data[self.image_name]) is not None:
@@ -200,7 +205,8 @@ class ObjectVisibleTask(Task):
     
 class MutableTask(Task):
     def __init__(self, mutablePose):
-        super().__init__(outcomes=['done'], input_keys=['x','y','z','roll','pitch','yaw'])
+        super().__init__(task_name='mutable_task', outcomes=['done'], input_keys=['x', 'y', 'z', 'roll', 'pitch', 'yaw'])
+        # super().__init__(task_name=name, outcomes=['done'], input_keys=['x','y','z','roll','pitch','yaw'])
         self.mutablePose = mutablePose
 
     def run(self, ud):

@@ -11,7 +11,6 @@
   <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>smach</depend>
-  <depend>python3-dependency-injector</depend>
   <depend>tf_transformations</depend>
   <depend>tf2</depend>
   <depend>python3-numpy</depend>
