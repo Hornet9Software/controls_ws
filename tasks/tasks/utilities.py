@@ -12,7 +12,7 @@ Quaternion, PointStamped
 from nav_msgs.msg import Odometry
 from tf_transformations import euler_from_quaternion, quaternion_multiply, quaternion_from_euler
 from copy import deepcopy
-from task import Task
+from tasks.task import Task
 from typing import Union, List, Dict
 from std_msgs.msg import Header
 from rclpy.logging import get_logger

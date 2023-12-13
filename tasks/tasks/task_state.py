@@ -16,7 +16,7 @@ class TaskState(Node):
 
     def __init__(self, task_name : str):
         super().__init__(f'{task_name}_node')
-        self.state_listener = self.create_subscription(Odometry, self.STATE_TOPIC, self._on_receive_state)
+        self.state_listener = self.create_subscription(Odometry, self.STATE_TOPIC, self._on_receive_state, 10)
         self.desired_pose_publisher = self.create_publisher(Pose, self.DESIRED_POSE_TOPIC, 10)
         self.desired_twist_velocity_publisher = self.create_publisher(Twist, self.DESIRED_TWIST_VELOCITY_TOPIC, 10)
         self.state = None

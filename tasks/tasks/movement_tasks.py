@@ -1,9 +1,10 @@
-from task import Task
+from tasks.task import Task
 from geometry_msgs.msg import Pose, Quaternion, Twist, Point, Vector3
 from nav_msgs.msg import Odometry
 from tf_transformations import quaternion_from_euler
-import utilities
+import tasks.utilities as utilities
 import rclpy
+import time
 
 class MoveToPoseGlobalTask(Task):
     def __init__(self, x, y, z, roll, pitch, yaw):
@@ -23,13 +24,14 @@ class MoveToPoseGlobalTask(Task):
 
         self.desired_pose = Pose()
         self.desired_pose.position = Point(x=self.coords[0], y=self.coords[1], z=self.coords[2])
-        self.desired_pose.orientation = Quaternion(
-            *quaternion_from_euler(
+        quat = quaternion_from_euler(
                 self.coords[3],
                 self.coords[4],
                 self.coords[5]
             )
-        )
+        orientation = Quaternion()
+        orientation.x, orientation.y, orientation.z, orientation.w = quat[0], quat[1], quat[2], quat[3]
+        self.desired_pose.orientation = orientation
 
         # calls run
         return super().execute(ud)
@@ -47,7 +49,7 @@ class MoveToPoseGlobalTask(Task):
             )
         ):
             self.publish_desired_pose(self.get_desired_pose())
-            rate.sleep()
+            time.sleep(0.5)
         
         return 'done'
     
