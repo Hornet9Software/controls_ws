@@ -1,6 +1,6 @@
 import rclpy
 from tasks.movement_tasks import MoveToPoseGlobalTask
-from tf2_ros import TransformListener
+
 
 def main(args=None):
     rclpy.init(args=args)

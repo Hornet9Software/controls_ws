@@ -31,5 +31,5 @@ class TaskState(Node):
         self.state = state
         
 
-    def _on_receive_cv_data(self, cv_object):
-        self.cv_data[cv_object.header.frame_id] = cv_object
+    def _on_receive_cv_data(self, cv_object : CVObject):
+        self.cv_data[cv_object.label] = cv_object

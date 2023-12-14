@@ -18,6 +18,7 @@ from std_msgs.msg import Header
 from rclpy.logging import get_logger
 
 
+
 def linear_distance(p1 : Point, p2 : Point) -> float:
     # Linear distance between 2 points
     v1 = np.array([p1.x, p1.y, p1.z])
