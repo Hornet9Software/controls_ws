@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'test_run = tasks.test_run:main'
+            'test_publish_global_pose = tasks.test_publish_global_pose_task:main',
+            'test_publish_current_state = tasks.test_publish_current_state:main'
         ],
     },
 )

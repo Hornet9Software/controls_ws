@@ -46,7 +46,9 @@ def angular_distance_rpy(rpy1 : tuple[float, float, float], rpy2 : tuple[float, 
     roll = np.fabs(rpy1[0] - rpy2[0])
     pitch = np.fabs(rpy1[1] - rpy2[1])
     yaw = np.fabs(rpy1[2] - rpy2[2])
-    return Vector3(roll, pitch, yaw)
+    angular_rpy = Vector3()
+    angular_rpy.x, angular_rpy.y, angular_rpy.z = roll, pitch, yaw
+    return angular_rpy
 
 
 def reached_pose(current_pose : Pose, desired_pose : Pose, linear_tolerance = 0.1, angular_tolerance = 3) -> bool:

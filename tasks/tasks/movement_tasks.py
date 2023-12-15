@@ -53,9 +53,11 @@ class MoveToPoseGlobalTask(Task):
                 self.state.twist.twist
             )
         ):
+            rclpy.spin_once(self.task_state)
+            print("not yet ", self.state)
             self.publish_desired_pose(self.get_desired_pose())
             time.sleep(0.5)
-        
+        print("i have arrived")
         return 'done'
     
     def get_desired_pose(self) -> Pose:
