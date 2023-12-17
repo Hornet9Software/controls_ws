@@ -11,6 +11,7 @@ int32 width
 
 float64 distance
 float64 bearing
+float64 leftright_ratio
 
 string label
 float64 score
