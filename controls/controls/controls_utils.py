@@ -16,7 +16,7 @@ def get_axes():
 
 def transform(origin_frame: str, dest_frame: str, poseORodom: Union[Pose, PoseStamped, Odometry]) -> Union[Pose, PoseStamped, Odometry]:
     tfBuffer = tf2_ros.Buffer()
-    trans = tfBuffer.lookup_transform(dest_frame, origin_frame, Time(),Duration(seconds=0.5))
+    trans = tfBuffer.lookup_transform(dest_frame, origin_frame, Time(), Duration(seconds=0.5))
 
     if isinstance(poseORodom, Pose):
         transformed = tf2_geometry_msgs.do_transform_pose(poseORodom,trans)
@@ -50,7 +50,7 @@ def transform(origin_frame: str, dest_frame: str, poseORodom: Union[Pose, PoseSt
         transformed_twist_point_linear_stamped = tf2_geometry_msgs.do_transform_point(twist_point_linear_stamped, trans)
         transformed_twist_point_angular_stamped = tf2_geometry_msgs.do_transform_point(twist_point_angular_stamped, trans)    
 
-        # conerting points back to twist
+        # converting points back to twist
         transformed_twist = Twist()
         transformed_twist.linear.x = transformed_twist_point_linear_stamped.point.x
         transformed_twist.linear.y = transformed_twist_point_linear_stamped.point.y
@@ -88,7 +88,7 @@ def _parse_pose(pose):
         'z': pose.position.z,
     }
 
-    # perform convertion from quaternion to euler angles
+    # perform conversion from quaternion to euler angles
 
     pose_dict['roll'],pose_dict['pitch'],pose_dict['yaw'] = transformations.euler_from_quaternion(
         [pose.orientation.x,
