@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from tasks.movement_tasks import MoveToPoseGlobalTask
+from tasks.movement_tasks import MoveToPoseTask
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose, Quaternion
 from tf_transformations import quaternion_from_euler
