@@ -14,6 +14,7 @@ def main():
         smach.StateMachine.add(
             "MoveForward",
             MoveToPoseTask(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
+            transitions={"done": "finish"},
         )
 
     sm.execute()
