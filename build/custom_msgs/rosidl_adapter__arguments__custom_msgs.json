@@ -1,0 +1,7 @@
+{
+  "package_name": "custom_msgs",
+  "non_idl_tuples": [
+    "/home/advaypakhale/Documents/ros2_ws/src/controls_ws/custom_msgs:msg/CVObject.msg",
+    "/home/advaypakhale/Documents/ros2_ws/src/controls_ws/custom_msgs:msg/ThrusterSpeeds.msg"
+  ]
+}

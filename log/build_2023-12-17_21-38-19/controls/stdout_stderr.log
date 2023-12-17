@@ -1,0 +1,56 @@
+running egg_info
+creating ../build/controls/controls.egg-info
+writing ../build/controls/controls.egg-info/PKG-INFO
+writing dependency_links to ../build/controls/controls.egg-info/dependency_links.txt
+writing entry points to ../build/controls/controls.egg-info/entry_points.txt
+writing requirements to ../build/controls/controls.egg-info/requires.txt
+writing top-level names to ../build/controls/controls.egg-info/top_level.txt
+writing manifest file '../build/controls/controls.egg-info/SOURCES.txt'
+reading manifest file '../build/controls/controls.egg-info/SOURCES.txt'
+writing manifest file '../build/controls/controls.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/desired_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/pid_manager.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/__init__.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/test_sub.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/test_pub.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/desired_setpoint_publisher.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/controls_utils.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+copying controls/state_republisher.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls
+running install
+/usr/lib/python3/dist-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+  warnings.warn(
+running install_lib
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/desired_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/pid_manager.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/__init__.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/test_sub.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/test_pub.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/desired_setpoint_publisher.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/controls_utils.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/build/lib/controls/state_republisher.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/desired_state.py to desired_state.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/pid_manager.py to pid_manager.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/test_sub.py to test_sub.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/test_pub.py to test_pub.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/desired_setpoint_publisher.py to desired_setpoint_publisher.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/controls_utils.py to controls_utils.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls/state_republisher.py to state_republisher.cpython-310.pyc
+running install_data
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/share/ament_index
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/share/ament_index/resource_index
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/share/ament_index/resource_index/packages
+copying resource/controls -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/share/ament_index/resource_index/packages
+copying package.xml -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/share/controls
+running install_egg_info
+Copying ../build/controls/controls.egg-info to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/python3.10/site-packages/controls-0.0.0-py3.10.egg-info
+running install_scripts
+Installing test_pub script to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/controls
+Installing test_sub script to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/controls/lib/controls
+writing list of installed files to '/home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/controls/install.log'

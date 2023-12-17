@@ -1,0 +1,57 @@
+running egg_info
+creating ../build/tasks/tasks.egg-info
+writing ../build/tasks/tasks.egg-info/PKG-INFO
+writing dependency_links to ../build/tasks/tasks.egg-info/dependency_links.txt
+writing entry points to ../build/tasks/tasks.egg-info/entry_points.txt
+writing requirements to ../build/tasks/tasks.egg-info/requires.txt
+writing top-level names to ../build/tasks/tasks.egg-info/top_level.txt
+writing manifest file '../build/tasks/tasks.egg-info/SOURCES.txt'
+reading manifest file '../build/tasks/tasks.egg-info/SOURCES.txt'
+writing manifest file '../build/tasks/tasks.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/movement_test.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/movement_tasks.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/task.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/__init__.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/utilities.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/task_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/test_publish_current_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+copying tasks/test_publish_global_pose_task.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks
+running install
+/usr/lib/python3/dist-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+  warnings.warn(
+running install_lib
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/movement_test.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/movement_tasks.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/task.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/__init__.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/utilities.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/task_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/test_publish_current_state.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+copying /home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/build/lib/tasks/test_publish_global_pose_task.py -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/movement_test.py to movement_test.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/movement_tasks.py to movement_tasks.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/task.py to task.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/utilities.py to utilities.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/task_state.py to task_state.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/test_publish_current_state.py to test_publish_current_state.cpython-310.pyc
+byte-compiling /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks/test_publish_global_pose_task.py to test_publish_global_pose_task.cpython-310.pyc
+running install_data
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/share/ament_index
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/share/ament_index/resource_index
+creating /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/share/ament_index/resource_index/packages
+copying resource/tasks -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/share/ament_index/resource_index/packages
+copying package.xml -> /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/share/tasks
+running install_egg_info
+Copying ../build/tasks/tasks.egg-info to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/python3.10/site-packages/tasks-0.0.0-py3.10.egg-info
+running install_scripts
+Installing movement_test script to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/tasks
+Installing test_publish_current_state script to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/tasks
+Installing test_publish_global_pose script to /home/advaypakhale/Documents/ros2_ws/src/controls_ws/install/tasks/lib/tasks
+writing list of installed files to '/home/advaypakhale/Documents/ros2_ws/src/controls_ws/build/tasks/install.log'
