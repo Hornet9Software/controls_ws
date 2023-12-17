@@ -9,9 +9,9 @@ from custom_msgs.msg import CVObject
 
 # Note: Because these are rclpy Nodes, for them to be 'alive' and usable, after creating them, we still have to spin_once/spin
 class TaskState(Node):
-    STATE_TOPIC = '/state'
-    DESIRED_POSE_TOPIC = 'controls/desired_pose'
-    DESIRED_TWIST_VELOCITY_TOPIC = 'controls/desired_twist'
+    STATE_TOPIC  = '/state'
+    DESIRED_POSE_TOPIC = '/controls/desired_pose'
+    DESIRED_TWIST_VELOCITY_TOPIC = '/controls/desired_twist'
     CV_TOPICS = []
 
     def __init__(self, task_name : str):
