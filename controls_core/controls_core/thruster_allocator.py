@@ -1,24 +1,30 @@
-#!/usr/bin/env python3
-
 import numpy as np
 import pandas as pd
-import math
 from scipy.optimize import lsq_linear
 
 thruster_positions = np.array(
     [
-        [-0.22, 0.22, -0.22, 0.22, -0.234, 0.234],
-        [0.238, 0.238, -0.217, -0.217, -0.001, -0.001],
-        [-0.054, -0.054, -0.054, -0.054, -0.107, -0.107],
+        [-0.22, 0.238, -0.054],  # Front Left
+        [0.22, 0.238, -0.054],  # Front Right
+        [-0.22, -0.217, -0.054],  # Middle Left
+        [0.22, -0.217, -0.054],  # Middle Right
+        [-0.234, -0.001, -0.107],  # Rear Left
+        [0.234, -0.001, -0.107],  # Rear Right
     ]
 )
 
 thruster_directions = np.array(
     [
-        [0.707, -0.707, -0.707, 0.707, 0.0, 0.0],
-        [0.707, 0.707, 0.707, 0.707, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
+        [1, 1, 0],  # Front Left
+        [-1, 1, 0],  # Front Right
+        [-1, 1, 0],  # Middle Left
+        [1, 1, 0],  # Middle Right
+        [0, 0, 1],  # Rear Left
+        [0, 0, 1],  # Rear Right
     ]
+)
+thruster_directions = thruster_directions / np.linalg.norm(
+    thruster_directions, keepdims=True, axis=1
 )
 
 I = np.array([0.205, 0.141, 0.205])
@@ -41,13 +47,15 @@ class ThrustAllocator:
         self.I = I
         self.thrust_map = thrust_map
 
-        self.unit_torque = np.cross(
-            self.thruster_positions.T, self.thruster_directions.T
-        ).T
-        self.parameters = np.concatenate((self.thruster_directions, self.unit_torque))
+        self.unit_torque = np.cross(self.thruster_positions, self.thruster_directions)
+        self.parameters = np.concatenate(
+            (self.thruster_directions.T, self.unit_torque.T)
+        )
 
-    def solve(self, linear_accelerations, angular_accelerations):
-        linear_accelerations[2] = linear_accelerations[2]
+    def getThrusts(self, linear_accelerations, angular_accelerations):
+        linear_accelerations = np.array(linear_accelerations)
+        angular_accelerations = np.array(angular_accelerations)
+
         self.expected_force = self.mass * linear_accelerations
         self.expected_torque = self.I * angular_accelerations
         self.goal = np.concatenate((self.expected_force, self.expected_torque))
@@ -56,6 +64,11 @@ class ThrustAllocator:
         ub = np.max(self.thrust_map[:, 0]) - 0.1
 
         thrust_newtons = lsq_linear(self.parameters, self.goal, bounds=(lb, ub)).x
+        return thrust_newtons
+
+    def getThrustPWMs(self, linear_accelerations, angular_accelerations):
+        thrust_newtons = self.getThrusts(linear_accelerations, angular_accelerations)
+
         thrust_converted = self.thrust_map[
             np.searchsorted(self.thrust_map[:, 0], thrust_newtons, side="left"), 1
         ].astype(int)
@@ -63,7 +76,7 @@ class ThrustAllocator:
         return thrust_converted
 
 
-def test():
+def movementTest():
     solver = ThrustAllocator()
     lin_acc = np.array([1.0, 0.0, 0.0])
     angular_acc = np.array([0.0, 0.0, 0.0])
@@ -72,4 +85,4 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    movementTest()
