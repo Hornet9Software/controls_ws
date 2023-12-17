@@ -21,7 +21,6 @@ class StateRepublisher(Node):
         self._pub_pose = {} 
         self._pub_twist = {}
 
-        
         # Create pose/twist publishers for each axis, storing them in their respective dicts
         for axis in utils.get_axes():
             self._pub_pose[axis] = self.create_publisher(Float64, self._get_pose_topic(axis),10)

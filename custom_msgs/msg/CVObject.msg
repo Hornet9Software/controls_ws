@@ -10,6 +10,7 @@ int32 height
 int32 width
 
 float64 distance
+float64 bearing
 
 string label
 float64 score
