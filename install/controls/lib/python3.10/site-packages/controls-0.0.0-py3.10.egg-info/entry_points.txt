@@ -1,0 +1,4 @@
+[console_scripts]
+test_pub = controls.test_pub:main
+test_sub = controls.test_sub:main
+

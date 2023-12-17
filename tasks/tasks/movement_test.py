@@ -2,7 +2,7 @@
 
 import rclpy
 import smach
-from tasks.movement_tasks import MoveToPoseSimple
+from tasks.movement_tasks import MoveToPoseGlobalTask
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
     with sm:
         smach.StateMachine.add(
             "MoveForward",
-            MoveToPoseTask(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
+            MoveToPoseGlobalTask(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
             transitions={"done": "finish"},
         )
 
@@ -23,7 +23,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(e)
+    main()
