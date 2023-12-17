@@ -20,6 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'test_sub = controls.test_sub:main',
+            'test_pub = controls.test_pub:main'
         ],
     },
 )

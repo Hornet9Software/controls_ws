@@ -8,7 +8,7 @@ from geometry_msgs.msg import TransformStamped
 import tf2_geometry_msgs
 from tf2_ros import TransformListener, Buffer
 # from rcply.qos import QoSProfile
-import controls_utils as utils
+import controls.controls_utils as utils
 
 class StateRepublisher(Node):
     STATE_TOPIC = '/state'
@@ -21,9 +21,6 @@ class StateRepublisher(Node):
         self._pub_pose = {} 
         self._pub_twist = {}
 
-        # Create transform listener
-        self.tf_buffer = Buffer(self, clock = self.get_clock())
-        self.listener = TransformListener(self.tf_buffer,self)
         
         # Create pose/twist publishers for each axis, storing them in their respective dicts
         for axis in utils.get_axes():

@@ -1,9 +1,9 @@
-from geometry_msgs import PoseStamped, Pose, PoseWithCovariance, Point, PointStamped, Twist, TwistWithCovariance, Voctor3
+from geometry_msgs.msg import PoseStamped, Pose, PoseWithCovariance, Point, PointStamped, Twist, TwistWithCovariance, Voctor3
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Header
 import tf2_geometry_msgs
 import tf2_ros
-from tf2_py import transformations
+from tf_transformations import euler_from_quaternion
 import rclpy
 from rclpy.duration import Duration
 from rclpy.time import Time
@@ -13,6 +13,9 @@ from typing import Union, List, Dict
 
 def get_axes():
     return ['x','y','z','roll','pitch','yaw']
+
+def get_controls_move_topic(axis):
+    return '/control_effort/' + axis
 
 def transform(origin_frame: str, dest_frame: str, poseORodom: Union[Pose, PoseStamped, Odometry]) -> Union[Pose, PoseStamped, Odometry]:
     tfBuffer = tf2_ros.Buffer()
@@ -70,7 +73,7 @@ def transform(origin_frame: str, dest_frame: str, poseORodom: Union[Pose, PoseSt
     return None
 
 
-def _parse_pose(pose):
+def _parse_pose(pose : Pose):
     """Converts a POSE message to a dictionary that maps direction to value.
     Does a convertion from quaternion to euler to convert orientation data to euler angles used by PID loops.
 
@@ -90,7 +93,7 @@ def _parse_pose(pose):
 
     # perform conversion from quaternion to euler angles
 
-    pose_dict['roll'],pose_dict['pitch'],pose_dict['yaw'] = transformations.euler_from_quaternion(
+    pose_dict['roll'],pose_dict['pitch'],pose_dict['yaw'] = euler_from_quaternion(
         [pose.orientation.x,
          pose.orientation.y,
          pose.orientation.z,
@@ -119,3 +122,7 @@ def _parse_twist(twist):
 def _publish_data_dictionary(publishers, vals, indexes = get_axes()):
     for axis in indexes:
         publishers[axis].publish(vals[axis])
+
+def _publish_data_constant(publishers, value, indexes = get_axes()):
+    for axis in indexes:
+        publishers[axis].publish(value)
