@@ -18,10 +18,10 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [
-            "test_publish_global_pose = tasks.test_publish_global_pose_task:main",
-            "test_publish_current_state = tasks.test_publish_current_state:main",
-            "movement_test = tasks.movement_test:main",
+        'console_scripts': [
+            'test_publish_global_pose = tasks.test_publish_global_pose_task:main',
+            'test_publish_current_state = tasks.test_publish_current_state:main',
+            'movement_test = tasks.movement_test:main'
         ],
     },
 )
