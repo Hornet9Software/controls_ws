@@ -44,3 +44,11 @@ HEAVILY inspired by https://github.com/tylerfeldman321/robosub-ros
 
 ### Notes
 ```spin_once()``` is required for the subscribers of Nodes to listen to topics. Publishers on the other hand work as usual without spinning, though it is not guaranteed we won't run into unexpected problems because of this. Use ```spin_once()``` over ```spin()``` because the latter is blocking, meaning nothing can continue or take place whilst the node spins.
+
+# Installation
+```
+sudo apt install ros-humble-smach-ros
+sudo apt install ros-humble-tf-transformations
+sudo pip3 install transforms3d
+sudo apt install ros-humble-dependency-injector
+```
