@@ -1,11 +1,12 @@
-from tasks.task import Task
-from geometry_msgs.msg import Pose, Quaternion, Twist, Point, Vector3
-from nav_msgs.msg import Odometry
-from tf_transformations import quaternion_from_euler
-import tasks.utilities as utilities
-import rclpy
 import time
 from threading import Thread
+
+import rclpy
+import tasks.utilities as utilities
+from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
+from nav_msgs.msg import Odometry
+from tasks.task import Task
+from tf_transformations import quaternion_from_euler
 
 
 # Note: odom is global base_link is local
@@ -59,18 +60,12 @@ class MoveToPoseSimple(Task):
 class MoveToPoseGlobalTask(Task):
     # Move to pose given in global coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):
-        super().__init__(task_name="move_to_global_task", outcomes=["done"])
+        super().__init__(task_name="move_to_pose_task", outcomes=["done"])
 
         self.coords = [x, y, z, roll, pitch, yaw]
 
     def execute(self, ud):
         self.initial_state = self.state
-
-        # pose from userdata if available
-        arg_names = ["x", "y", "z", "roll", "pitch", "yaw"]
-        for i in range(len(arg_names)):
-            if arg_names[i] in ud:
-                self.coords[i] = ud[arg_names[i]]
 
         self.desired_pose = Pose()
         self.desired_pose.position = Point(

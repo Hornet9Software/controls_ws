@@ -13,7 +13,7 @@ def main():
     with sm:
         smach.StateMachine.add(
             "MoveForward",
-            MoveToPoseSimple(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
+            MoveToPoseTask(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
             transitions={"done": "finish"},
         )
 
