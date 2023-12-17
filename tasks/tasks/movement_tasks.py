@@ -56,10 +56,10 @@ class MoveToPoseSimple(Task):
         return self.desired_pose
 
 
-class MoveToPoseTask(Task):
+class MoveToPoseGlobalTask(Task):
     # Move to pose given in global coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):
-        super().__init__(task_name='move_to_pose_task', outcomes=['done'])
+        super().__init__(task_name="move_to_global_task", outcomes=["done"])
 
         self.coords = [x, y, z, roll, pitch, yaw]
 
@@ -67,10 +67,10 @@ class MoveToPoseTask(Task):
         self.initial_state = self.state
 
         # pose from userdata if available
-        # arg_names = ['x', 'y', 'z', 'roll', 'pitch', 'yaw']
-        # for i in range(len(arg_names)):
-        #     if arg_names[i] in ud:
-        #         self.coords[i] = ud[arg_names[i]]
+        arg_names = ["x", "y", "z", "roll", "pitch", "yaw"]
+        for i in range(len(arg_names)):
+            if arg_names[i] in ud:
+                self.coords[i] = ud[arg_names[i]]
 
         self.desired_pose = Pose()
         self.desired_pose.position = Point(
@@ -110,7 +110,7 @@ class MoveToPoseTask(Task):
         return self.desired_pose
 
 
-class MoveToPoseLocalTask(MoveToPoseTask):
+class MoveToPoseLocalTask(MoveToPoseGlobalTask):
     # Move to pose given in local coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):
         super().__init__(x, y, z, roll, pitch, yaw)
