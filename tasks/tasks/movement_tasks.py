@@ -57,7 +57,7 @@ class MoveToPoseSimple(Task):
         return self.desired_pose
 
 
-class MoveToPoseTask(Task):
+class MoveToPoseGlobalTask(Task):
     # Move to pose given in global coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):
         super().__init__(task_name="move_to_pose_task", outcomes=["done"])
@@ -105,7 +105,7 @@ class MoveToPoseTask(Task):
         return self.desired_pose
 
 
-class MoveToPoseLocalTask(MoveToPoseTask):
+class MoveToPoseLocalTask(MoveToPoseGlobalTask):
     # Move to pose given in local coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):
         super().__init__(x, y, z, roll, pitch, yaw)
