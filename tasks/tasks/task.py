@@ -1,24 +1,25 @@
-from tasks.task_state import TaskState
-from dependency_injector import providers
-from geometry_msgs.msg import Pose, Twist
-from nav_msgs.msg import Odometry
-import rclpy
-
-# providers is used to create instances of a class/object
+from abc import abstractmethod
 
 # smach stands for State Machine for Advanced Robots, provides us with state machines
 # A state machine consists of states, state transitions and associated actions
 import smach
+from dependency_injector import providers
+from geometry_msgs.msg import Pose, Twist
+from nav_msgs.msg import Odometry
+from tasks.task_state import TaskState
 
-from abc import abstractmethod
+# providers is used to create instances of a class/object
+
 
 class Task(smach.State):
     # Use this to create a single TaskState instance
     task_state_provider = providers.Singleton(TaskState)
 
-    def __init__(self, task_name : str, outcomes, input_keys=[], output_keys=[], io_keys=[]):
+    def __init__(
+        self, task_name: str, outcomes, input_keys=[], output_keys=[], io_keys=[]
+    ):
         super().__init__(outcomes, input_keys, output_keys, io_keys)
-        
+
         self.task_state = self.task_state_provider(task_name=task_name)
         self.start_time = None
         self.initial_state = None
@@ -28,28 +29,27 @@ class Task(smach.State):
     @property
     def state(self) -> Odometry:
         return self.task_state.state
-    
+
     @property
     def cv_data(self) -> dict:
         return self.task_state.cv_data
-    
+
     @abstractmethod
     def run(self, ud):
-        # To be overwritten by a subclass 
+        # To be overwritten by a subclass
         pass
 
     def execute(self, ud):
         # Sets initital_state as current task state
         self.initial_state = self.state
         return self.run(ud)
-    
+
     # Invokes task_state's properties to publish stuff
-    def publish_desired_pose(self, pose : Pose):
+    def publish_desired_pose(self, pose: Pose):
         self.task_state.desired_pose_publisher.publish(pose)
 
-    def publish_desired_twist(self, twist : Twist):
+    def publish_desired_twist(self, twist: Twist):
         self.task_state.desired_twist_velocity_publisher.publish(twist)
-
 
 
 """

@@ -1,8 +1,8 @@
-import rclpy
-from std_msgs.msg import Float64, Bool
-from geometry_msgs.msg import Pose, Twist
 import controls.controls_utils as utils
+from geometry_msgs.msg import Pose, Twist
 from rclpy.node import Node
+from std_msgs.msg import Bool, Float64
+
 
 class PIDManager(Node):
     # Manages publishing to PID loops
@@ -20,12 +20,22 @@ class PIDManager(Node):
         super().__init__("PIDManager")
         for axis in utils.get_axes():
             # Create publishers
-            self.pub_pose[axis] = self.create_publisher(Float64, self.get_pose_pid_topic(axis), 3)
-            self.pub_pose_enable[axis] = self.create_publisher(Bool, self.get_pose_pid_enable_topic(axis), 3)
-            self.pub_vel[axis] = self.create_publisher(Float64, self.get_vel_pid_topic(axis), 3)
-            self.pub_vel_enable[axis] = self.create_publisher(Bool, self.get_vel_pid_enable_topic(axis), 3)
-            self.pub_control_effort[axis] = self.create_publisher(Float64, utils.get_controls_move_topic(axis), 3)
-    
+            self.pub_pose[axis] = self.create_publisher(
+                Float64, self.get_pose_pid_topic(axis), 3
+            )
+            self.pub_pose_enable[axis] = self.create_publisher(
+                Bool, self.get_pose_pid_enable_topic(axis), 3
+            )
+            self.pub_vel[axis] = self.create_publisher(
+                Float64, self.get_vel_pid_topic(axis), 3
+            )
+            self.pub_vel_enable[axis] = self.create_publisher(
+                Bool, self.get_vel_pid_enable_topic(axis), 3
+            )
+            self.pub_control_effort[axis] = self.create_publisher(
+                Float64, utils.get_controls_move_topic(axis), 3
+            )
+
     def soft_estop(self):
         # Disable all PID loops and publish 0 everywhere
         self.disable_loops()
@@ -38,26 +48,25 @@ class PIDManager(Node):
         # Disable
         utils._publish_data_constant(self.pub_pose_enable, False)
         utils._publish_data_constant(self.pub_vel_enable, False)
-    
+
     def enable_loops(self):
         self.halted = False
         utils._publish_data_constant(self.pub_pose_enable, True)
         utils._publish_data_constant(self.pub_vel_enable, True)
 
     def get_pose_pid_topic(self, axis):
-        return 'controls/' + axis + '_pos/setpoint'
-    
-    def get_vel_pid_topic(self, axis):
-        return 'controls/' + axis + '_vel/setpoint'
-    
-    def get_pose_pid_enable_topic(self, axis):
-        return 'controls/enable/' + axis + '_pos'
-    
-    def get_vel_pid_enable_topic(self, axis):
-        return 'controls/enable/' + axis + '_vel'
-    
+        return "controls/" + axis + "_pos/setpoint"
 
-    def position_control(self, pose : dict):
+    def get_vel_pid_topic(self, axis):
+        return "controls/" + axis + "_vel/setpoint"
+
+    def get_pose_pid_enable_topic(self, axis):
+        return "controls/enable/" + axis + "_pos"
+
+    def get_vel_pid_enable_topic(self, axis):
+        return "controls/enable/" + axis + "_vel"
+
+    def position_control(self, pose: dict):
         # Enable PID loops
         # Position PID generate set-points for velocity loops, which in trun produce control efforts
         self.enable_loops()

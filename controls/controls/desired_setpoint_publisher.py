@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-from custom_msgs.msg import CVObject
-from geometry_msgs.msg import Pose, Quaternion, Point
-from tf_transformations import quarternion_from_euler
-
 import math
+
+from custom_msgs.msg import CVObject
+from geometry_msgs.msg import Pose
+from rclpy.node import Node
+from tf_transformations import quarternion_from_euler
 
 
 class SetpointPublisher(Node):
