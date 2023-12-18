@@ -3,7 +3,6 @@ from copy import deepcopy
 from typing import Dict, List, Union
 
 import numpy as np
-import rclpy
 import tf2_geometry_msgs
 import tf2_ros
 from geometry_msgs.msg import (
