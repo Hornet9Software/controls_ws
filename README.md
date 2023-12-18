@@ -50,5 +50,5 @@ HEAVILY inspired by https://github.com/tylerfeldman321/robosub-ros
 sudo apt install ros-humble-smach-ros
 sudo apt install ros-humble-tf-transformations
 sudo pip3 install transforms3d
-sudo apt install ros-humble-dependency-injector
+pip install dependency-injector
 ```
