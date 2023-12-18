@@ -5,8 +5,7 @@ import tasks.utilities as utilities
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from nav_msgs.msg import Odometry
 from tasks.task import Task
-from tf2_ros import TransformListener
-from tf_transformations import quaternion_from_euler
+from tf_transformations import euler_from_quaternion, quaternion_from_euler
 
 # Note: odom is global base_link is local
 
@@ -45,8 +44,18 @@ class MoveToPoseGlobalTask(Task):
         return super().execute(ud)
 
     def run(self, ud):
-        print("moving to ", self.desired_pose)
-        rate = self.task_state.create_rate(15)
+        desiredPosition = self.desired_pose.position
+        desiredOrientation = euler_from_quaternion(
+            [
+                self.desired_pose.orientation.x,
+                self.desired_pose.orientation.y,
+                self.desired_pose.orientation.z,
+                self.desired_pose.orientation.w,
+            ]
+        )
+        print(
+            f"Moving to ({desiredPosition.x}, {desiredPosition.y}, {desiredPosition.z}) with orientation {desiredOrientation}."
+        )
 
         # loop continues as long as conditional evaluates to false
         while not (
@@ -55,6 +64,7 @@ class MoveToPoseGlobalTask(Task):
                 self.state.pose.pose, self.get_desired_pose(), self.state.twist.twist
             )
         ):
+            self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
             print("not yet ", self.state)
             self.publish_desired_pose(self.get_desired_pose())

@@ -5,7 +5,7 @@ import math
 from custom_msgs.msg import CVObject
 from geometry_msgs.msg import Pose
 from rclpy.node import Node
-from tf_transformations import quarternion_from_euler
+from tf_transformations import quaternion_from_euler
 
 
 class SetpointPublisher(Node):
@@ -33,7 +33,7 @@ class SetpointPublisher(Node):
         pose.position.y = y
         pose.position.z = z
 
-        quat = quarternion_from_euler(r, p, y)
+        quat = quaternion_from_euler(r, p, y)
 
         pose.orientation.x = quat[0]
         pose.orientation.y = quat[1]
