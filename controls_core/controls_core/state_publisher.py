@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-from nav_msgs.msg import Odometry
 import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Imu
 from geometry_msgs.msg import (
+    Point,
     Pose,
     PoseWithCovariance,
     Quaternion,
-    Point,
     Twist,
     TwistWithCovariance,
 )
-from tf_transformations import quaternion_from_euler, euler_from_quaternion
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from sensor_msgs.msg import Imu
+from tf_transformations import euler_from_quaternion, quaternion_from_euler
 
 
 class SetpointPublisher(Node):
@@ -43,8 +43,6 @@ class SetpointPublisher(Node):
         self.r_prev = 0
         self.p_prev = 0
         self.y_prev = 0
-
-        rclpy.spin(self)
 
     def imu_callback(self, msg):
         ax = msg.linear_acceleration.x
@@ -104,3 +102,15 @@ class SetpointPublisher(Node):
         )
 
         self.pub.publish(odom)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    imu = SetpointPublisher()
+    rclpy.spin(imu)
+    imu.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

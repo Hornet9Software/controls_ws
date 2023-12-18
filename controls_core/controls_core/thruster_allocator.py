@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import lsq_linear
@@ -29,7 +31,10 @@ thruster_directions = thruster_directions / np.linalg.norm(
 
 I = np.array([0.205, 0.141, 0.205])
 
-thrust_map = pd.read_csv("thrust_map.csv").values
+print(Path.cwd())
+thrust_map = pd.read_csv(
+    "src/controls_ws/controls_core/controls_core/thrust_map.csv"
+).values
 
 
 class ThrustAllocator:
@@ -74,15 +79,3 @@ class ThrustAllocator:
         ].astype(int)
 
         return thrust_converted
-
-
-def movementTest():
-    solver = ThrustAllocator()
-    lin_acc = np.array([1.0, 0.0, 0.0])
-    angular_acc = np.array([0.0, 0.0, 0.0])
-
-    print(solver.solve(lin_acc, angular_acc))
-
-
-if __name__ == "__main__":
-    movementTest()

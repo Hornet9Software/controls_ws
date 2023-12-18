@@ -9,6 +9,9 @@ from tf_transformations import euler_from_quaternion, quaternion_from_euler
 
 # Note: odom is global base_link is local
 
+quat_to_list = lambda quat: [quat.x, quat.y, quat.z, quat.w]
+pos_to_list = lambda pos: [pos.x, pos.y, pos.z]
+
 
 class MoveToPoseGlobalTask(Task):
     # Move to pose given in global coordinates
@@ -46,15 +49,10 @@ class MoveToPoseGlobalTask(Task):
     def run(self, ud):
         desiredPosition = self.desired_pose.position
         desiredOrientation = euler_from_quaternion(
-            [
-                self.desired_pose.orientation.x,
-                self.desired_pose.orientation.y,
-                self.desired_pose.orientation.z,
-                self.desired_pose.orientation.w,
-            ]
+            quat_to_list(self.desired_pose.orientation)
         )
         print(
-            f"Moving to ({desiredPosition.x}, {desiredPosition.y}, {desiredPosition.z}) with orientation {desiredOrientation}."
+            f"Moving to {tuple(pos_to_list(desiredPosition))} with orientation {desiredOrientation}."
         )
 
         # loop continues as long as conditional evaluates to false
@@ -66,9 +64,22 @@ class MoveToPoseGlobalTask(Task):
         ):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
-            print("not yet ", self.state)
+
+            if self.state is not None:
+                currPose = self.state.pose.pose
+                currPos = currPose.position
+                currAtt = euler_from_quaternion(quat_to_list(currPose.orientation))
+                print(
+                    f"Current Position: {tuple(pos_to_list(currPos))}\tCurrent Attitude: {currAtt}"
+                )
+                print(
+                    f"Desired Position: {tuple(pos_to_list(desiredPosition))}\tDesired Attitude: {desiredOrientation}"
+                )
+
+            print(f"not yet")
             self.publish_desired_pose(self.get_desired_pose())
             time.sleep(0.5)
+
         print("i have arrived")
         return "done"
 
