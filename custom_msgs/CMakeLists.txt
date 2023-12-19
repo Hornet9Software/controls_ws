@@ -28,7 +28,6 @@ endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/CVObject.msg"
-"msg/ThrusterSpeeds.msg"
 DEPENDENCIES std_msgs
 )
 
