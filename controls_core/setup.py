@@ -26,6 +26,7 @@ setup(
             "moveBack = controls_core.movement_test:moveBack",
             "moveUp = controls_core.movement_test:moveUp",
             "moveDown = controls_core.movement_test:moveDown",
+            "attitudeControl = controls_core.attitude_control_test:main",
         ],
     },
 )

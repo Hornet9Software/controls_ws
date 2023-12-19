@@ -5,14 +5,11 @@ import tasks.utilities as utilities
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from nav_msgs.msg import Odometry
 from tasks.task import Task
+from tasks.utilities import pos_to_list, quat_to_list
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
 
+
 # Note: odom is global base_link is local
-
-quat_to_list = lambda quat: [quat.x, quat.y, quat.z, quat.w]
-pos_to_list = lambda pos: [pos.x, pos.y, pos.z]
-
-
 class MoveToPoseGlobalTask(Task):
     # Move to pose given in global coordinates
     def __init__(self, x, y, z, roll, pitch, yaw):

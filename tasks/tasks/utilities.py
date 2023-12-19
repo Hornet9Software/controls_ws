@@ -1,6 +1,6 @@
 from cmath import nan
 from copy import deepcopy
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import tf2_geometry_msgs
@@ -28,6 +28,9 @@ from tf_transformations import (
     quaternion_from_euler,
     quaternion_multiply,
 )
+
+quat_to_list = lambda quat: [quat.x, quat.y, quat.z, quat.w]
+pos_to_list = lambda pos: [pos.x, pos.y, pos.z]
 
 
 def linear_distance(p1: Point, p2: Point) -> float:
