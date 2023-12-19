@@ -1,9 +1,9 @@
 import rclpy
 from controls_core.thruster_allocator import ThrustAllocator
+from controls_core.utilities import quat_to_list
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from simple_pid import PID
-from tasks.utilities import quat_to_list
 from tf_transformations import euler_from_quaternion
 from thrusters.thrusters import ThrusterControl
 
