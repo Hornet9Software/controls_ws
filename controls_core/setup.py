@@ -19,7 +19,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "imu_publisher = controls_core.state_publisher:main",
+            "state_publisher = controls_core.state_publisher:main",
             "moveLeft = controls_core.movement_test:moveLeft",
             "moveRight = controls_core.movement_test:moveRight",
             "moveFront = controls_core.movement_test:moveFront",
