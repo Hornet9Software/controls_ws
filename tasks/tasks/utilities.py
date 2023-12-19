@@ -1,6 +1,6 @@
 from cmath import nan
 from copy import deepcopy
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 
 import numpy as np
 import tf2_geometry_msgs
@@ -53,7 +53,7 @@ def angular_distance_quat(q1: Quaternion, q2: Quaternion) -> Vector3:
 
 
 def angular_distance_rpy(
-    rpy1: tuple[float, float, float], rpy2: tuple[float, float, float]
+    rpy1: Tuple[float, float, float], rpy2: Tuple[float, float, float]
 ) -> Vector3:
     # Find difference between 2 RPYs
     roll = np.fabs(rpy1[0] - rpy2[0])
