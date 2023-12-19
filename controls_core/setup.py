@@ -21,6 +21,11 @@ setup(
         "console_scripts": [
             "imu_publisher = controls_core.state_publisher:main",
             "moveLeft = controls_core.movement_test:moveLeft",
+            "moveRight = controls_core.movement_test:moveRight",
+            "moveFront = controls_core.movement_test:moveFront",
+            "moveBack = controls_core.movement_test:moveBack",
+            "moveUp = controls_core.movement_test:moveUp",
+            "moveDown = controls_core.movement_test:moveDown",
         ],
     },
 )

@@ -1,7 +1,21 @@
+import numpy as np
 import rclpy
 from controls_core.thruster_allocator import ThrustAllocator
 from rclpy.node import Node
 from thrusters.thrusters import ThrusterControl
+
+LIN_ACC_MAG = 1.0
+
+MOVE_LEFT = [-1, 0, 0]
+MOVE_RIGHT = [1, 0, 0]
+MOVE_FRONT = [0, 1, 0]
+MOVE_BACK = [0, -1, 0]
+MOVE_UP = [0, 0, 1]
+MOVE_DOWN = [0, 0, -1]
+
+
+thrusterControl = ThrusterControl()
+thrustAllocator = ThrustAllocator()
 
 
 class MovementTestPublisher(Node):
@@ -12,54 +26,41 @@ class MovementTestPublisher(Node):
         self.angular_acc = angular_acc
 
     def movementTest(self):
-        thrusterControl = ThrusterControl()
-        solver = ThrustAllocator()
-
         # FL-FR-ML-MR-RL-RR
-        thrustValues = solver.getThrustPWMs(self.lin_acc, self.angular_acc)
+        thrustValues = thrustAllocator.getThrustPWMs(self.lin_acc, self.angular_acc)
+        self.get_logger().info(f"{thrustValues}")
         thrusterControl.setThrusters(thrustValues=thrustValues)
 
 
-linAccMag = 1.0
-
-
-def main(movementPublisher):
-    rclpy.init(args=None)
+def main(args, direction, magnitude):
+    rclpy.init(args=args)
+    movementPublisher = MovementTestPublisher(
+        lin_acc=magnitude * np.array(direction), angular_acc=[0, 0, 0]
+    )
     rclpy.spin(movementPublisher)
     movementPublisher.destroy_node()
     rclpy.shutdown()
 
 
-def moveLeft():
-    movementPublisher = MovementTestPublisher(
-        [-linAccMag, 0.0, 0.0], angular_acc=[0.0, 0.0, 0.0]
-    )
-    main(movementPublisher)
+def moveLeft(args=None):
+    main(args, MOVE_LEFT, LIN_ACC_MAG)
 
 
-def moveRight():
-    movementPublisher = MovementTestPublisher(
-        [-linAccMag, 0.0, 0.0], angular_acc=[0.0, 0.0, 0.0]
-    )
-    main(movementPublisher)
+def moveRight(args=None):
+    main(args, MOVE_RIGHT, LIN_ACC_MAG)
 
 
-def moveFront():
-    movementPublisher = MovementTestPublisher(
-        [0.0, linAccMag, 0.0], angular_acc=[0.0, 0.0, 0.0]
-    )
-    main(movementPublisher)
+def moveFront(args=None):
+    main(args, MOVE_FRONT, LIN_ACC_MAG)
 
 
-def moveBack():
-    movementPublisher = MovementTestPublisher(
-        [0.0, -linAccMag, 0.0], angular_acc=[0.0, 0.0, 0.0]
-    )
-    main(movementPublisher)
+def moveBack(args=None):
+    main(args, MOVE_BACK, LIN_ACC_MAG)
 
 
-def moveDown():
-    movementPublisher = MovementTestPublisher(
-        [0.0, 0, 0, -linAccMag], angular_acc=[0.0, 0.0, 0.0]
-    )
-    main(movementPublisher)
+def moveUp(args=None):
+    main(args, MOVE_UP, LIN_ACC_MAG)
+
+
+def moveDown(args=None):
+    main(args, MOVE_DOWN, LIN_ACC_MAG)
