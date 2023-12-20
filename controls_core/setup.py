@@ -28,6 +28,10 @@ setup(
             "moveDown = controls_core.movement_test:moveDown",
             "attitudeControl = controls_core.attitude_control_test:main",
             "imu_zeroing = controls_core.imu_zeroing:main",
+            "moveLeftPID = controls_core.move_pid_test:moveLeft",
+            "moveRightPID = controls_core.move_pid_test:moveRight",
+            "moveFrontPID = controls_core.move_pid_test:moveFront",
+            "moveBackPID = controls_core.move_pid_test:moveBack",
         ],
     },
 )
