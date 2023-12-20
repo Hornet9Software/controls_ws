@@ -3,8 +3,8 @@ import time
 import numpy as np
 import pandas as pd
 import rclpy
-from rclpy.node import Node
 from imu_msg.msg import Imu
+from rclpy.node import Node
 
 FILEPATH = "test.csv"
 duration = 10
@@ -19,11 +19,13 @@ class IMUSubscriber(Node):
         self.end_t = time.time() + 10
 
     def imu_callback(self, msg):
-        rpy = np.array([msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z])
+        rpy = np.array(
+            [msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z]
+        )
         self.get_logger().info(f"RPY: {rpy}")
         self.rpyAve = (self.count * self.rpyAve + rpy) / (self.count + 1)
         self.count += 1
-        if (time.time() > self.end_t):
+        if time.time() > self.end_t:
             print("done")
             self.saveZeroing()
             self.destroy_node()
@@ -41,5 +43,5 @@ def main(args=None):
     rclpy.init(args=args)
     sub = IMUSubscriber()
     rclpy.spin(sub)
-    sub.destroy_node()
-    rclpy.shutdown()
+    # sub.destroy_node()
+    # rclpy.shutdown()
