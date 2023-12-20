@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import lsq_linear
 
+# fmt: off
 thruster_positions = np.array(
     [
         [-0.22, 0.238, -0.054],     # Front Left
@@ -12,7 +13,6 @@ thruster_positions = np.array(
         [0.234, -0.001, -0.107],    # Middle Right
         [-0.22, -0.217, -0.054],    # Rear Left
         [0.22, -0.217, -0.054],     # Rear Right
-
     ]
 )
 
@@ -26,6 +26,15 @@ thruster_directions = np.array(
         [1, 1, 0],                  # Rear Right
     ]
 )
+
+thruster_biases = np.array([1.0,    # Front Left
+                            1.0,    # Front Right
+                            1.0,    # Middle Left
+                            1.0,    # Middle Right
+                            1.0,    # Rear Left
+                            1.0])   # Rear Right
+# fmt: on
+
 thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1
 )
@@ -74,9 +83,10 @@ class ThrustAllocator:
 
     def getThrustPWMs(self, linear_accelerations, angular_accelerations):
         thrust_newtons = self.getThrusts(linear_accelerations, angular_accelerations)
+        thrust_biased = thrust_newtons * thruster_biases
 
         thrust_converted = self.thrust_map[
-            np.searchsorted(self.thrust_map[:, 0], thrust_newtons, side="left"), 1
+            np.searchsorted(self.thrust_map[:, 0], thrust_biased, side="left"), 1
         ].astype(int)
 
         return thrust_converted
