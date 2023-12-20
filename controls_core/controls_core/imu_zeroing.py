@@ -3,10 +3,8 @@ import time
 import numpy as np
 import pandas as pd
 import rclpy
-from controls_core.utilities import quat_to_list
 from rclpy.node import Node
-from sensor_msgs.msg import Imu
-from tf_transformations import euler_from_quaternion
+from imu_msg.msg import Imu
 
 FILEPATH = "test.csv"
 duration = 10
@@ -18,13 +16,19 @@ class IMUSubscriber(Node):
         self.rpyAve = np.array([0, 0, 0])
         self.create_subscription(Imu, "/sensors/imu", self.imu_callback, 10)
         self.count = 0
-        self.create_timer(duration, self.saveZeroing)
+        self.end_t = time.time() + 10
+        # self.create_timer(duration, self.saveZeroing)
 
     def imu_callback(self, msg):
-        rpy = np.array(euler_from_quaternion(quat_to_list(msg.orientation)))
+        rpy = np.array([msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z])
         self.get_logger().info(f"RPY: {rpy}")
         self.rpyAve = (self.count * self.rpyAve + rpy) / (self.count + 1)
         self.count += 1
+        if (time.time() > self.end_t):
+            print("done")
+            self.saveZeroing()
+            self.destroy_node()
+            rclpy.shutdown()
 
     def saveZeroing(self):
         self.get_logger().info(f"Shutting down node after {duration} seconds.")
@@ -38,5 +42,5 @@ def main(args=None):
     rclpy.init(args=args)
     sub = IMUSubscriber()
     rclpy.spin(sub)
-    sub.destroy_node()
-    rclpy.shutdown()
+    # sub.destroy_node()
+    # rclpy.shutdown()

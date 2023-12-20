@@ -11,7 +11,7 @@ from geometry_msgs.msg import (
 )
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
-from sensor_msgs.msg import Imu
+from imu_msg.msg import Imu
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
 
 
@@ -49,9 +49,7 @@ class SetpointPublisher(Node):
         ay = msg.linear_acceleration.y
         az = msg.linear_acceleration.z
 
-        r, p, y = euler_from_quaternion(
-            [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
-        )
+        r, p, y = msg.roll_pitch_yaw
 
         self.curr_time = self.get_clock().now()
         dt = (self.curr_time - self.prev_time).nanoseconds / 1000000000
