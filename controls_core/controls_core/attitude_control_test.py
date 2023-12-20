@@ -2,10 +2,8 @@ import numpy as np
 import rclpy
 from controls_core.driver import AttitudeControl
 from controls_core.thruster_allocator import ThrustAllocator
-from controls_core.utilities import quat_to_list
-from nav_msgs.msg import Odometry
+from imu_msg.msg import Imu
 from rclpy.node import Node
-from tf_transformations import euler_from_quaternion
 from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
@@ -22,12 +20,11 @@ class AttitudeControlTestPublisher(Node):
     def __init__(self):
         super().__init__("attitude_control_test_publisher_node")
         self.state_subscriber = self.create_subscription(
-            Odometry, "/state", self.attitudeControl, 10
+            Imu, "/sensors/imu", self.attitudeControl, 10
         )
 
-    def attitudeControl(self, msg: Odometry):
-        currAttQuat = msg.pose.pose.orientation
-        currAttRPY = euler_from_quaternion(quat_to_list(currAttQuat))
+    def attitudeControl(self, msg: Imu):
+        currAttRPY = msg.roll_pitch_yaw
 
         angular_acc = attitudeControl.getAttitudeCorrection(
             currAttRPY=currAttRPY, targetAttRPY=targetAttRPY
