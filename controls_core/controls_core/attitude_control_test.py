@@ -41,8 +41,8 @@ class AttitudeControlTestPublisher(Node):
         thrusterControl.setThrusters(thrustValues=thrustValues)
 
 
-def main():
-    rclpy.init(args=None)
+def main(args=None):
+    rclpy.init(args=args)
     publisher = AttitudeControlTestPublisher()
     rclpy.spin(publisher)
     publisher.destroy_node()
