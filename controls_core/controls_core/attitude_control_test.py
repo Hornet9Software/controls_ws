@@ -24,13 +24,10 @@ class AttitudeControlTestPublisher(Node):
         )
 
     def attitudeControl(self, msg: Imu):
-        currAttRPY = msg.roll_pitch_yaw
+        currAttRPY = [msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z]
 
         angular_acc = attitudeControl.getAttitudeCorrection(
             currAttRPY=currAttRPY, targetAttRPY=targetAttRPY
-        )
-        self.get_logger().info(
-            f"Deviation (Target - Curr): {targetAttRPY - currAttRPY}"
         )
         self.get_logger().info(f"PID angular acceleration: {angular_acc}")
         # FL-FR-ML-MR-RL-RR

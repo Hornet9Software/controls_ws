@@ -1,5 +1,5 @@
 import numpy as np
-from PID import PID
+from controls_core.PID import PID
 
 imuZero = [0.0, 0.0, 2.3114576746942372]
 
