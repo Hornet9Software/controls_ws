@@ -20,7 +20,7 @@ def moveRight():
     rclpy.init(args=None)
     driver = Driver()
     driver.drive(
-        [1, 0, -upthrust],
+        [1, 0, upthrust],
         [0, 0, 0],
     )
     rclpy.spin(driver)
@@ -32,7 +32,7 @@ def moveFront():
     rclpy.init(args=None)
     driver = Driver()
     driver.drive(
-        [0, 1, -upthrust],
+        [0, 1, upthrust],
         [0, 0, 0],
     )
     rclpy.spin(driver)
@@ -44,7 +44,7 @@ def moveBack():
     rclpy.init(args=None)
     driver = Driver()
     driver.drive(
-        [0, -1, -upthrust],
+        [0, -1, upthrust],
         [0, 0, 0],
     )
     rclpy.spin(driver)
