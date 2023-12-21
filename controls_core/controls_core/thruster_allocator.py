@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 
 import numpy as np
@@ -41,10 +42,14 @@ thruster_directions = thruster_directions / np.linalg.norm(
 
 I = np.array([0.205, 0.141, 0.205])
 
+rosThrustMapPath = "src/controls_ws/controls_core/controls_core/thrust_map.csv"
+wsThrustMapPath = "thrust_map.csv"  # For debugging with test.ipynb
 print(Path.cwd())
-thrust_map = pd.read_csv(
-    "src/controls_ws/controls_core/controls_core/thrust_map.csv"
-).values
+
+if os.path.exists(rosThrustMapPath):
+    thrust_map = pd.read_csv(rosThrustMapPath).values
+else:
+    thrust_map = pd.read_csv(wsThrustMapPath).values
 
 
 class ThrustAllocator:
