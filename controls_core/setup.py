@@ -31,6 +31,7 @@ setup(
             "moveRightPID = controls_core.move_pid_test:moveRight",
             "moveFrontPID = controls_core.move_pid_test:moveFront",
             "moveBackPID = controls_core.move_pid_test:moveBack",
+            "steer = controls_core.steer:main",
         ],
     },
 )

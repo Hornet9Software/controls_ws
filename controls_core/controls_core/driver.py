@@ -1,5 +1,6 @@
 import numpy as np
 from controls_core.attitude_control import AttitudeControl
+from controls_core.PID_values import rollPID, yawPID
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
 from rclpy.node import Node
@@ -15,7 +16,7 @@ class Driver(Node):
         self.state_subscriber = self.create_subscription(
             Imu, "/sensors/imu", self.attitudeControl, 10
         )
-        self.attitudeControl = AttitudeControl()
+        self.attitudeControl = AttitudeControl(rollPID, yawPID)
 
         self.linear_acc = np.array([0, 0, 0])
         self.angular_acc = np.array([0, 0, 0])
@@ -36,5 +37,4 @@ class Driver(Node):
         self.angular_acc = angular_acc
 
     def kill(self):
-        self.linear_acc = np.array([0, 0, 0])
-        self.angular_acc = np.array([0, 0, 0])
+        thrusterControl.killThrusters()

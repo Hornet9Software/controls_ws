@@ -1,13 +1,12 @@
 import numpy as np
-from controls_core.PID import PID
 
 imuZero = [0.0, 0.0, 2.3114576746942372]
 
 
 class AttitudeControl:
-    def __init__(self):
-        self.rollPID = PID(Kp=1.0, Ki=0.0, Kd=0.0, sample_time=0.1)
-        self.yawPID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
+    def __init__(self, rollPID, yawPID):
+        self.rollPID = rollPID
+        self.yawPID = yawPID
 
     def boundAngle(self, angle):
         """
@@ -82,3 +81,6 @@ class AttitudeControl:
         angular_acc = [rollAcc, 0, yawAcc]
 
         return angular_acc
+
+    def getSteer(self, deviationRPY):
+        return self.getAttitudeCorrection([0, 0, 0], deviationRPY)
