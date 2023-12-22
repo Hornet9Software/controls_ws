@@ -1,6 +1,6 @@
 import numpy as np
 import rclpy
-from controls_core.driver import Driver
+from controls_core.driver import Driver, thrusterControl
 from controls_core.params import UPTHRUST
 from controls_core.utilities import BACK, DOWN, FRONT, LEFT, RIGHT, UP
 

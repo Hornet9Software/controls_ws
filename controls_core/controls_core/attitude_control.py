@@ -1,6 +1,5 @@
 import numpy as np
-
-imuZero = [0.0, 0.0, 2.3114576746942372]
+from controls_core.params import IMU_ZERO, UPTHRUST
 
 
 class AttitudeControl:
@@ -25,7 +24,7 @@ class AttitudeControl:
         Correct IMU by subtracting imuZero.
         """
         corrAtt = []
-        for att, zero in zip(currAtt, imuZero):
+        for att, zero in zip(currAtt, IMU_ZERO):
             corrAtt.append(self.boundAngle(att - zero))
 
         return corrAtt

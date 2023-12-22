@@ -1,7 +1,7 @@
 import numpy as np
 import rclpy
 from controls_core.driver import AttitudeControl
-from controls_core.params import rollPID, yawPID
+from controls_core.params import UPTHRUST, rollPID, yawPID
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
 from rclpy.node import Node
@@ -30,7 +30,7 @@ class AttitudeControlTestPublisher(Node):
         )
         self.get_logger().info(f"PID angular acceleration: {angular_acc}")
         # FL-FR-ML-MR-RL-RR
-        thrustValues = thrustAllocator.getThrustPWMs([0, 0, 0], angular_acc)
+        thrustValues = thrustAllocator.getThrustPWMs([0, 0, UPTHRUST], angular_acc)
         thrusterControl.setThrusters(thrustValues=thrustValues)
 
 
