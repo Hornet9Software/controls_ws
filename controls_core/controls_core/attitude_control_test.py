@@ -1,7 +1,7 @@
 import numpy as np
 import rclpy
 from controls_core.driver import AttitudeControl
-from controls_core.PID_values import rollPID, yawPID
+from controls_core.params import rollPID, yawPID
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
 from rclpy.node import Node
@@ -36,7 +36,11 @@ class AttitudeControlTestPublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    publisher = AttitudeControlTestPublisher()
-    rclpy.spin(publisher)
-    publisher.destroy_node()
-    rclpy.shutdown()
+    node = AttitudeControlTestPublisher()
+
+    try:
+        rclpy.spin(node)
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        thrusterControl.killThrusters()
+    finally:
+        rclpy.try_shutdown()

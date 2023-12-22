@@ -1,12 +1,10 @@
 import rclpy
 from controls_core.attitude_control import AttitudeControl
-from controls_core.PID_values import cameraSteerPID, rollPID
+from controls_core.params import cameraSteerPID, rollPID
 from controls_core.thruster_allocator import ThrustAllocator
 from rclpy.node import Node
 from std_msgs.msg import Float32
 from thrusters.thrusters import ThrusterControl
-
-# from rclpy.signals import SignalHandlerOptions
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
@@ -31,11 +29,6 @@ class Steer(Node):
         thrustValues = thrustAllocator.getThrustPWMs(self.linear_acc, attCorr)
         thrusterControl.setThrusters(thrustValues=thrustValues)
 
-    def kill(self):
-        self.get_logger().info("Killing thrusters...")
-        thrusterControl.killThrusters()
-        self.get_logger().info("Killed thrusters.")
-
 
 def main(args=None):
     rclpy.init(args=args)
@@ -44,10 +37,11 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        node.kill()
+        thrusterControl.killThrusters()
     finally:
         rclpy.try_shutdown()
 
+    # from rclpy.signals import SignalHandlerOptions
     # while True:
     #     try:
     #         rclpy.spin_once(node, timeout_sec=0.1)

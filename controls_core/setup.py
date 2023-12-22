@@ -19,12 +19,12 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "moveLeft = controls_core.movement_test:moveLeft",
-            "moveRight = controls_core.movement_test:moveRight",
-            "moveFront = controls_core.movement_test:moveFront",
-            "moveBack = controls_core.movement_test:moveBack",
-            "moveUp = controls_core.movement_test:moveUp",
-            "moveDown = controls_core.movement_test:moveDown",
+            "moveLeft = controls_core.move_test:moveLeft",
+            "moveRight = controls_core.move_test:moveRight",
+            "moveFront = controls_core.move_test:moveFront",
+            "moveBack = controls_core.move_test:moveBack",
+            "moveUp = controls_core.move_test:moveUp",
+            "moveDown = controls_core.move_test:moveDown",
             "attitudeControl = controls_core.attitude_control_test:main",
             "imu_zeroing = controls_core.imu_zeroing:main",
             "moveLeftPID = controls_core.move_pid_test:moveLeft",

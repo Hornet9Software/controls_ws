@@ -1,18 +1,12 @@
 import numpy as np
 import rclpy
+from controls_core.params import UPTHRUST
 from controls_core.thruster_allocator import ThrustAllocator
+from controls_core.utilities import BACK, DOWN, FRONT, LEFT, RIGHT, UP
 from rclpy.node import Node
 from thrusters.thrusters import ThrusterControl
 
 LIN_ACC_MAG = 1.0
-
-MOVE_LEFT = [-1, 0, 0]
-MOVE_RIGHT = [1, 0, 0]
-MOVE_FRONT = [0, 1, 0]
-MOVE_BACK = [0, -1, 0]
-MOVE_UP = [0, 0, 1]
-MOVE_DOWN = [0, 0, -1]
-
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
@@ -34,33 +28,38 @@ class MovementTestPublisher(Node):
 
 def main(args, direction, magnitude):
     rclpy.init(args=args)
-    movementPublisher = MovementTestPublisher(
-        lin_acc=magnitude * np.array(direction), angular_acc=[0, 0, 0]
+    node = MovementTestPublisher(
+        lin_acc=magnitude * np.array(direction) + np.array([0, 0, UPTHRUST]),
+        angular_acc=[0, 0, 0],
     )
-    rclpy.spin(movementPublisher)
-    movementPublisher.destroy_node()
-    rclpy.shutdown()
+
+    try:
+        rclpy.spin(node)
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        thrusterControl.killThrusters()
+    finally:
+        rclpy.try_shutdown()
 
 
 def moveLeft(args=None):
-    main(args, MOVE_LEFT, LIN_ACC_MAG)
+    main(args, LEFT, LIN_ACC_MAG)
 
 
 def moveRight(args=None):
-    main(args, MOVE_RIGHT, LIN_ACC_MAG)
+    main(args, RIGHT, LIN_ACC_MAG)
 
 
 def moveFront(args=None):
-    main(args, MOVE_FRONT, LIN_ACC_MAG)
+    main(args, FRONT, LIN_ACC_MAG)
 
 
 def moveBack(args=None):
-    main(args, MOVE_BACK, LIN_ACC_MAG)
+    main(args, BACK, LIN_ACC_MAG)
 
 
 def moveUp(args=None):
-    main(args, MOVE_UP, LIN_ACC_MAG)
+    main(args, UP, LIN_ACC_MAG)
 
 
 def moveDown(args=None):
-    main(args, MOVE_DOWN, LIN_ACC_MAG)
+    main(args, DOWN, LIN_ACC_MAG)

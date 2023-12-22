@@ -26,6 +26,13 @@ from tf_transformations import (
     quaternion_multiply,
 )
 
+LEFT = [-1, 0, 0]
+RIGHT = [1, 0, 0]
+FRONT = [0, 1, 0]
+BACK = [0, -1, 0]
+UP = [0, 0, 1]
+DOWN = [0, 0, -1]
+
 quat_to_list = lambda quat: [quat.x, quat.y, quat.z, quat.w]
 pos_to_list = lambda pos: [pos.x, pos.y, pos.z]
 
