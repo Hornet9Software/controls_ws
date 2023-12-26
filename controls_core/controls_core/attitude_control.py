@@ -1,4 +1,5 @@
 import numpy as np
+
 from controls_core.params import IMU_ZERO, UPTHRUST
 
 
@@ -36,18 +37,28 @@ class AttitudeControl:
             Bounded error is pi/2.
             Curr is pi/2 bigger than target.
             Rotate clockwise.
+            -ve acceleration.
 
         If target = -pi/2 and curr = pi,
             Unbounded error is 3*pi/2.
             Bounded error is -pi/2.
             Curr is pi/2 smaller than target.
             Rotate anti-clockwise.
+            +ve acceleration.
 
         If target = -pi/2 and curr = 0,
-            Unbounded error is -pi/2.
-            Bounded error is -pi/2.
-            Curr is pi/2 smaller than target.
+            Unbounded error is pi/2.
+            Bounded error is pi/2.
+            Curr is pi/2 bigger than target.
+            Rotate clockwise.
+            -ve acceleration.
+
+        If target = 0 and curr = -pi,
+            Unbounded error is -pi.
+            Bounded error is -pi.
+            Curr is pi smaller than target.
             Rotate anti-clockwise.
+            +ve acceleration
         """
         # Might not need this
         currAngle = self.boundAngle(currAngle)
@@ -56,6 +67,14 @@ class AttitudeControl:
         return self.boundAngle(currAngle - targetAngle)
 
     def getAttitudeCorrection(self, currAttRPY, targetAttRPY):
+        """
+        currAttRPY is before correcting for IMU zero. It is the
+        raw IMU roll, pitch and yaw.
+
+        targetAttRPY is after correcting for IMU zero. It is the
+        roll, pitch and yaw value relative to the zero.
+        """
+
         currRoll, _, currYaw = self.correctIMU(currAttRPY)
         targetRoll, _, targetYaw = targetAttRPY
 
