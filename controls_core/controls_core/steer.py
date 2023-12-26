@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rclpy
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import cameraSteerPID, rollPID
