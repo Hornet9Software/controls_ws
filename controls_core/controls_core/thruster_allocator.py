@@ -45,7 +45,7 @@ thruster_directions = thruster_directions / np.linalg.norm(
 I = np.array([0.205, 0.141, 0.205])
 
 rosThrustMapPath = "src/controls_ws/controls_core/controls_core/thrust_map.csv"
-wsThrustMapPath = "thrust_map.csv"  # For debugging with test.ipynb
+wsThrustMapPath = "controls_core/thrust_map.csv"  # For debugging with test.ipynb
 print(Path.cwd())
 
 if os.path.exists(rosThrustMapPath):
