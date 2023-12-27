@@ -1,5 +1,6 @@
 import math
 import time
+import threading
 
 import rclpy
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
@@ -11,6 +12,7 @@ from controls_ws.controls_core.controls_core.attitude_control import AttitudeCon
 from controls_ws.controls_core.controls_core.position_control import PositionControl
 from controls_ws.controls_core.controls_core.thruster_allocator import ThrustAllocator
 from controls_ws.controls_core.controls_core.params import *
+from controls_ws.controls_core.controls_core.PID import PIDTuner
 from thrusters.thrusters import ThrusterControl
 
 import controls_ws.controls_core.controls_core.utilities as utilities
@@ -41,6 +43,8 @@ class RotateToObject(Task):
         self.task_state.create_rate(15)
         rclpy.spin_once(self.task_state)
 
+        print("INITIALISING ROTATION TO OBJECT", self.objectName)
+
         while not self.stopped_at_bearing(self.cv_data[self.objectName]["bearing"]):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
@@ -48,9 +52,12 @@ class RotateToObject(Task):
             self.currentBearing[2] = self.cv_data[self.objectName]["bearing"]
 
             attCorr = self.attitudeControl.getSteer(self.currentBearing)
+            print("ATTITUDE CORRECTION TO OBJECT", self.objectName, attCorr)
             thrustValues = self.thrustAllocator.getThrustPWMs(self.linearAcc, attCorr)
             self.thrusterControl.setThrusters(thrustValues=thrustValues)
+            print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
 
+        print("COMPLETED ROTATION TO OBJECT", self.objectName)
         return "done"
 
 
@@ -81,11 +88,13 @@ class LateralShiftToObject(Task):
         self.task_state.create_rate(15)
         rclpy.spin_once(self.task_state)
 
+        print("INITIALISING LATERAL SHIFT TO OBJECT", self.objectName)
         while not self.stopped_at_position(self.cv_data[self.objectName]["lateral"]):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
 
             self.currLateral = self.cv_data[self.objectName]["lateral"]
+            print("LATERAL CORRECTION TO OBJECT", self.objectName, self.currLateral)
 
             self.linearAcc = self.positionControl.getPositonCorrection(
                 currDistance=0.0,
@@ -98,8 +107,10 @@ class LateralShiftToObject(Task):
             thrustValues = self.thrustAllocator.getThrustPWMs(
                 self.linearAcc, self.angularAcc
             )
+            print("CORRECTNG LATERAL WITH THRUST", thrustValues)
             self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
+        print("COMPLETED LATERAL SHIFT TO OBJECT", self.objectName)
         return "done"
 
 
@@ -189,11 +200,13 @@ class MoveStraightToObject(Task):
         self.task_state.create_rate(15)
         rclpy.spin_once(self.task_state)
 
+        print("INITIALISING MOVEMENT TO OBJECT", self.objectName)
         while not self.stopped_at_position(self.cv_data[self.objectName]["distance"]):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
 
             self.currDistance = self.cv_data[self.objectName]["distance"]
+            print("DISTANCE CORRECTION TO OBJECT", self.objectName, self.currDistance)
 
             self.linearAcc = self.positionControl.getPositonCorrection(
                 currDistance=self.currDistance,
@@ -206,8 +219,10 @@ class MoveStraightToObject(Task):
             thrustValues = self.thrustAllocator.getThrustPWMs(
                 self.linearAcc, self.angularAcc
             )
+            print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
             self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
+        print("COMPLETED MOVEMENT TO OBJECT", self.objectName)
         return "done"
 
 
@@ -229,6 +244,10 @@ class DiveToDepth(Task):
             distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
         )
 
+        threading.Thread(
+            target=PIDTuner, args=[self.positionControl.distancePID], daemon=True
+        ).start()
+
         return super().execute(ud)
 
     def stopped_at_position(self, currentDepth):
@@ -238,9 +257,13 @@ class DiveToDepth(Task):
         self.task_state.create_rate(15)
         rclpy.spin_once(self.task_state)
 
+        print("INITIALISING DIVE TO DEPTH", self.desiredDepth)
+
         while not self.stopped_at_position(self.depth):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
+
+            print("CURRENT DEPTH", self.depth)
 
             self.linearAcc = self.positionControl.getPositonCorrection(
                 currDistance=0.0,
@@ -253,8 +276,10 @@ class DiveToDepth(Task):
             thrustValues = self.thrustAllocator.getThrustPWMs(
                 self.linearAcc, self.angularAcc
             )
+            print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
             self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
+        print("COMPLETED DIVE TO DEPTH", self.desiredDepth)
         return "done"
 
 

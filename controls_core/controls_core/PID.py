@@ -42,3 +42,10 @@ class PID:
             + (self.kd * self.derivative)
             + self.bias
         )
+
+
+def PIDTuner(PID):
+    while True:
+        PID.kp, PID.ki, PID.kd = list(
+            map(float, input("Enter Kp, Ki, Kd delineated by a single space: ").split())
+        )

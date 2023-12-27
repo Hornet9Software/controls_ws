@@ -13,8 +13,8 @@ def main():
 
     with sm:
         smach.StateMachine.add(
-            "Steer To Gate",
-            RotateToObject(objectName="gate", tolerance=1.0),
+            "Depth PID Tuning",
+            DiveToDepth(desiredDepth=1.5, tolerance=0.05),
             transitions={"done": "finish"},
         )
 
