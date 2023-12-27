@@ -28,12 +28,16 @@ class Task(smach.State):
 
     # Use as task.state
     @property
-    def state(self) -> Odometry:
+    def state(self):
         return self.task_state.state
 
     @property
     def cv_data(self) -> dict:
         return self.task_state.cv_data
+
+    @property
+    def depth(self):
+        return self.task_state.depth
 
     @abstractmethod
     def run(self, ud):
@@ -100,8 +104,10 @@ class MutableTask(Task):
 
         return "done"
 
+
 def cv_object_position(cv_obj_data):
     pass
+
 
 """
 Notes for smach.State:

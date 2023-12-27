@@ -2,7 +2,8 @@
 
 import rclpy
 import smach
-from tasks.movement_tasks import MoveToPoseGlobalTask
+from tasks.movement_tasks import *
+from thrusters.thrusters import ThrusterControl
 
 
 def main():
@@ -12,14 +13,17 @@ def main():
 
     with sm:
         smach.StateMachine.add(
-            "MoveForward",
-            MoveToPoseGlobalTask(0.0, 5.0, 0.0, 0.0, 0.0, 0.0),
+            "Steer To Gate",
+            RotateToObject(objectName="gate", tolerance=1.0),
             transitions={"done": "finish"},
         )
 
-    sm.execute()
+    try:
+        sm.execute()
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        thrusterControl.killThrusters()
 
-    rclpy.shutdown()
+    rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

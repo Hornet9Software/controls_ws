@@ -22,7 +22,6 @@ class RotateToObject(Task):
         super().__init__(task_name="rotate_to_object", outcomes=["done"])
         self.objectName = objectName
         self.tolerance = tolerance
-        self.topic = self.objectName + "/bearing"
 
     def execute(self, ud):
         self.thrusterControl = ThrusterControl()
@@ -39,11 +38,14 @@ class RotateToObject(Task):
         return math.fabs(currentBearing) <= self.tolerance
 
     def run(self, ud):
-        while not self.stopped_at_bearing(self.cv_data[self.topic]):
+        self.task_state.create_rate(15)
+        rclpy.spin_once(self.task_state)
+
+        while not self.stopped_at_bearing(self.cv_data[self.objectName]["bearing"]):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
 
-            self.currentBearing[2] = self.cv_data[self.topic]
+            self.currentBearing[2] = self.cv_data[self.objectName]["bearing"]
 
             attCorr = self.attitudeControl.getSteer(self.currentBearing)
             thrustValues = self.thrustAllocator.getThrustPWMs(self.linearAcc, attCorr)
@@ -57,7 +59,6 @@ class LateralShiftToObject(Task):
         super().__init__(task_name="lateral_shift_to_object", outcomes=["done"])
         self.objectName = objectName
         self.tolerance = tolerance
-        self.topic = self.objectName + "/lateral"
 
     def execute(self, ud):
         self.thrusterControl = ThrusterControl()
@@ -77,11 +78,14 @@ class LateralShiftToObject(Task):
         return math.fabs(currentLateral) <= self.tolerance
 
     def run(self, ud):
-        while not self.stopped_at_position(self.cv_data[self.topic]):
+        self.task_state.create_rate(15)
+        rclpy.spin_once(self.task_state)
+
+        while not self.stopped_at_position(self.cv_data[self.objectName]["lateral"]):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
 
-            self.currLateral = self.cv_data[self.topic]
+            self.currLateral = self.cv_data[self.objectName]["lateral"]
 
             self.linearAcc = self.positionControl.getPositonCorrection(
                 currDistance=0.0,
@@ -106,9 +110,6 @@ class AlignToObject(Task):
         self.bearingTolerance = bearingTolerance
         self.lateralTolerance = lateralTolerance
 
-        self.bearingTopic = self.objectName + "/bearing"
-        self.lateralTopic = self.objectName + "/lateral"
-
     def execute(self, ud):
         self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
@@ -131,15 +132,18 @@ class AlignToObject(Task):
         return math.fabs(currentLateral) <= self.lateralTolerance
 
     def run(self, ud):
+        self.task_state.create_rate(15)
+        rclpy.spin_once(self.task_state)
+
         while not (
-            self.stopped_at_bearing(self.cv_data[self.bearingTopic])
-            and self.stopped_at_position(self.cv_data[self.lateralTopic])
+            self.stopped_at_bearing(self.cv_data[self.objectName]["bearing"])
+            and self.stopped_at_position(self.cv_data[self.objectName]["lateral"])
         ):
             self.task_state.create_rate(15)
             rclpy.spin_once(self.task_state)
 
-            self.currentBearing[2] = self.cv_data[self.bearingTopic]
-            self.currLateral = self.cv_data[self.lateralTopic]
+            self.currentBearing[2] = self.cv_data[self.objectName]["bearing"]
+            self.currLateral = self.cv_data[self.objectName]["lateral"]
 
             self.angularAcc = self.attitudeControl.getSteer(self.currentBearing)
             self.linearAcc = self.positionControl.getPositonCorrection(
@@ -149,6 +153,102 @@ class AlignToObject(Task):
                 desiredLateral=0.0,
                 currDepth=0.0,
                 desiredDepth=0.0,
+            )
+            thrustValues = self.thrustAllocator.getThrustPWMs(
+                self.linearAcc, self.angularAcc
+            )
+            self.thrusterControl.setThrusters(thrustValues=thrustValues)
+
+        return "done"
+
+
+class MoveStraightToObject(Task):
+    def __init__(self, objectName, tolerance):
+        super().__init__(task_name="move_straight_to_object", outcomes=["done"])
+        self.objectName = objectName
+        self.tolerance = tolerance
+
+    def execute(self, ud):
+        self.thrusterControl = ThrusterControl()
+        self.thrustAllocator = ThrustAllocator()
+
+        self.angularAcc = [0.0, 0.0, 0.0]
+        self.linearAcc = [0.0, 1.0, 0.0]
+        self.currLateral = 0.0
+
+        self.positionControl = PositionControl(
+            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
+        )
+
+        return super().execute(ud)
+
+    def stopped_at_position(self, currentDistance):
+        return math.fabs(currentDistance) <= self.tolerance
+
+    def run(self, ud):
+        self.task_state.create_rate(15)
+        rclpy.spin_once(self.task_state)
+
+        while not self.stopped_at_position(self.cv_data[self.objectName]["distance"]):
+            self.task_state.create_rate(15)
+            rclpy.spin_once(self.task_state)
+
+            self.currDistance = self.cv_data[self.objectName]["distance"]
+
+            self.linearAcc = self.positionControl.getPositonCorrection(
+                currDistance=self.currDistance,
+                desiredDistance=0.0,
+                currLateral=0.0,
+                desiredLateral=0.0,
+                currDepth=0.0,
+                desiredDepth=0.0,
+            )
+            thrustValues = self.thrustAllocator.getThrustPWMs(
+                self.linearAcc, self.angularAcc
+            )
+            self.thrusterControl.setThrusters(thrustValues=thrustValues)
+
+        return "done"
+
+
+class DiveToDepth(Task):
+    def __init__(self, desiredDepth, tolerance):
+        super().__init__(task_name="dive_to_depth", outcomes=["done"])
+        self.desiredDepth = desiredDepth
+        self.tolerance = tolerance
+
+    def execute(self, ud):
+        self.thrusterControl = ThrusterControl()
+        self.thrustAllocator = ThrustAllocator()
+
+        self.angularAcc = [0.0, 0.0, 0.0]
+        self.linearAcc = [0.0, 0.0, 1.0]
+        self.currLateral = 0.0
+
+        self.positionControl = PositionControl(
+            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
+        )
+
+        return super().execute(ud)
+
+    def stopped_at_position(self, currentDepth):
+        return math.fabs(currentDepth) <= self.tolerance
+
+    def run(self, ud):
+        self.task_state.create_rate(15)
+        rclpy.spin_once(self.task_state)
+
+        while not self.stopped_at_position(self.depth):
+            self.task_state.create_rate(15)
+            rclpy.spin_once(self.task_state)
+
+            self.linearAcc = self.positionControl.getPositonCorrection(
+                currDistance=0.0,
+                desiredDistance=0.0,
+                currLateral=0.0,
+                desiredLateral=0.0,
+                currDepth=self.depth,
+                desiredDepth=self.desiredDepth,
             )
             thrustValues = self.thrustAllocator.getThrustPWMs(
                 self.linearAcc, self.angularAcc
