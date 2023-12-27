@@ -88,3 +88,17 @@ class CVToControlsSignals(Node):
             outMsg = Float32()
             outMsg.data = eval(signal)
             self.objectPublishers[objectName][signal].publish(outMsg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    cvProcessor = CVToControlsSignals(objects=["gate"])
+
+    try:
+        rclpy.spin(cvProcessor)
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        rclpy.try_shutdown()
+
+
+if __name__ == "__main__":
+    main()
