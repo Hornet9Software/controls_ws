@@ -241,35 +241,39 @@ class DiveToDepth(Task):
         return super().execute(ud)
 
     def stopped_at_position(self, currentDepth):
-        return math.fabs(currentDepth) <= self.tolerance
+        return math.fabs(currentDepth - self.desiredDepth) <= self.tolerance
 
     def run(self, ud):
-        self.task_state.create_rate(15)
-        rclpy.spin_once(self.task_state)
+        self.task_state.create_rate(100)
 
         print("INITIALISING DIVE TO DEPTH", self.desiredDepth)
+        print()
 
-        while not self.stopped_at_position(self.depth):
-            self.task_state.create_rate(15)
+        while True:
             rclpy.spin_once(self.task_state)
 
-            print("CURRENT DEPTH", self.depth)
+            while self.depth is None:
+                rclpy.spin_once(self.task_state)
 
-            self.linearAcc = self.positionControl.getPositonCorrection(
-                currDistance=0.0,
-                desiredDistance=0.0,
-                currLateral=0.0,
-                desiredLateral=0.0,
-                currDepth=self.depth,
-                desiredDepth=self.desiredDepth,
-            )
-            thrustValues = self.thrustAllocator.getThrustPWMs(
-                self.linearAcc, self.angularAcc
-            )
-            print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
+            if not self.stopped_at_position(self.depth):
+                print("CURRENT DEPTH", self.depth)
 
-        print("COMPLETED DIVE TO DEPTH", self.desiredDepth)
-        return "done"
+                self.linearAcc = self.positionControl.getPositonCorrection(
+                    currDistance=0.0,
+                    desiredDistance=0.0,
+                    currLateral=0.0,
+                    desiredLateral=0.0,
+                    currDepth=self.depth,
+                    desiredDepth=self.desiredDepth,
+                )
+                thrustValues = self.thrustAllocator.getThrustPWMs(
+                    self.linearAcc, self.angularAcc
+                )
+                print("CORRECTNG WITH THRUST", thrustValues)
+                print("\n=========\n")
+            else:
+                print("COMPLETED DIVE TO DEPTH", self.desiredDepth, "\n\n=========\n")
+                return "done"
 
 
 # Note: odom is global base_link is local

@@ -25,16 +25,14 @@ class DummyData(Node):
         self.depthTimer = self.create_timer(self.depthUpdatePeriod, self.depthDummyData)
 
     def yoloDummyData(self):
-        xMin = random.random()
-        yMin = random.random()
+        xMin = random.uniform(0.2, 0.8)
         xMax = random.uniform(xMin, 1.0)
-        yMax = random.uniform(yMin, 1.0)
-
-        w = xMax - xMin
-        h = yMax - yMin
-
         x = (xMin + xMax) / 2.0
-        y = (yMin + yMax) / 2.0
+        w = xMax - xMin
+
+        # Assuming AUV is centred vertically to gate
+        y = 0.5
+        h = random.uniform(0.2, 0.95)
 
         msg = Float32MultiArray()
         msg.data = [x, y, w, h]

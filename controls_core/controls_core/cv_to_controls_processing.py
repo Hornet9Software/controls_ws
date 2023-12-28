@@ -20,7 +20,7 @@ class CVToControlsSignals(Node):
             self.IMAGE_WIDTH_PIXELS / 2.0,
             self.IMAGE_HEIGHT_PIXELS / 2.0,
         )
-        self.OBJECT_DIMENSIONS = {"gate": (0.150, 0.100)}
+        self.OBJECT_DIMENSIONS = {"gate": (1.5, 1.0)}
         self.HFOV = math.radians(50.7)
         self.VFOV = math.radians(37.7)
 
@@ -52,6 +52,8 @@ class CVToControlsSignals(Node):
         yMin = y_centre - h / 2.0
         yMax = y_centre + h / 2.0
 
+        print("XMIN XMAX YMIN YMAX: ", xMin, xMax, yMin, yMax)
+
         objectWidthPixels = xMax - xMin
         objectHeightPixels = yMax - yMin
         objectCentroid = ((xMin + xMax) / 2.0, (yMin + yMax) / 2.0)
@@ -61,14 +63,20 @@ class CVToControlsSignals(Node):
 
         imageHeight = metrePerPixelVertical * self.IMAGE_HEIGHT_PIXELS
 
+        print("IMAGE HEIGHT: ", imageHeight)
+
         # VARIABLES
         # D: perpendicular distance to plane of projection of gate
 
         D = imageHeight / (2.0 * math.tan(self.VFOV / 2.0))
 
+        print("D: ", D)
+
         metresPerPixelHorizontal = (
             2.0 * D * math.tan(self.HFOV / 2.0) / self.IMAGE_WIDTH_PIXELS
         )
+
+        print("METRES PER PIXEL HORIZONTAL: ", metresPerPixelHorizontal)
 
         deltaXPixels = objectCentroid[0] - self.IMAGE_CENTROID[0]
         deltaX = metresPerPixelHorizontal * deltaXPixels
@@ -79,13 +87,20 @@ class CVToControlsSignals(Node):
             deltaX *= -1
 
         bearing = math.atan2(deltaX, D)
+        print("BEARING: ", bearing)
+
         if objectOnLeft:
             bearing += math.pi / 2.0
 
         distance = math.hypot(D, deltaX)
 
+        print("DISTANCE: ", distance)
+
         projectedWidth = metresPerPixelHorizontal * objectWidthPixels
-        lateral = math.acos(projectedWidth / objectWidth)
+        print("PROJECTED WIDTH: ", projectedWidth)
+        print("\n============\n")
+
+        lateral = math.acos(min(projectedWidth, objectWidth) / objectWidth)
 
         for signal in ["distance", "lateral", "bearing"]:
             outMsg = Float32()
