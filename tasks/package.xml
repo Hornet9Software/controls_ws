@@ -6,7 +6,6 @@
   <description>TODO: Package description</description>
   <maintainer email="averageandyyy@gmail.com">averageandy</maintainer>
   <license>TODO: License declaration</license>
-
   <depend>rclpy</depend>
   <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
@@ -14,8 +13,6 @@
   <depend>tf_transformations</depend>
   <depend>tf2</depend>
   <depend>python3-numpy</depend>
-  <exec_depend>custom_msgs</exec_depend>
-
   <export>
     <build_type>ament_python</build_type>
   </export>

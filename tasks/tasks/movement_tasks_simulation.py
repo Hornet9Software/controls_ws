@@ -13,7 +13,6 @@ from controls_core.position_control import PositionControl
 from controls_core.thruster_allocator import ThrustAllocator
 from controls_core.params import *
 from controls_core.PID import PIDTuner
-from thrusters.thrusters import ThrusterControl
 
 import controls_core.utilities as utilities
 from controls_core.utilities import pos_to_list, quat_to_list
@@ -26,7 +25,6 @@ class RotateToObject(Task):
         self.tolerance = tolerance
 
     def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
 
         self.currentBearing = [0.0, 0.0, 90.0]
@@ -54,7 +52,6 @@ class RotateToObject(Task):
             attCorr = self.attitudeControl.getSteer(self.currentBearing)
             print("ATTITUDE CORRECTION TO OBJECT", self.objectName, attCorr)
             thrustValues = self.thrustAllocator.getThrustPWMs(self.linearAcc, attCorr)
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
             print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
 
         print("COMPLETED ROTATION TO OBJECT", self.objectName)
@@ -68,7 +65,6 @@ class LateralShiftToObject(Task):
         self.tolerance = tolerance
 
     def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
 
         self.angularAcc = [0.0, 0.0, 0.0]
@@ -108,7 +104,6 @@ class LateralShiftToObject(Task):
                 self.linearAcc, self.angularAcc
             )
             print("CORRECTNG LATERAL WITH THRUST", thrustValues)
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
         print("COMPLETED LATERAL SHIFT TO OBJECT", self.objectName)
         return "done"
@@ -122,7 +117,6 @@ class AlignToObject(Task):
         self.lateralTolerance = lateralTolerance
 
     def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
 
         self.currentBearing = [0.0, 0.0, 90.0]
@@ -168,7 +162,6 @@ class AlignToObject(Task):
             thrustValues = self.thrustAllocator.getThrustPWMs(
                 self.linearAcc, self.angularAcc
             )
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
         return "done"
 
@@ -180,7 +173,6 @@ class MoveStraightToObject(Task):
         self.tolerance = tolerance
 
     def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
 
         self.angularAcc = [0.0, 0.0, 0.0]
@@ -220,7 +212,6 @@ class MoveStraightToObject(Task):
                 self.linearAcc, self.angularAcc
             )
             print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
         print("COMPLETED MOVEMENT TO OBJECT", self.objectName)
         return "done"
@@ -233,7 +224,6 @@ class DiveToDepth(Task):
         self.tolerance = tolerance
 
     def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
         self.thrustAllocator = ThrustAllocator()
 
         self.angularAcc = [0.0, 0.0, 0.0]
@@ -277,7 +267,6 @@ class DiveToDepth(Task):
                 self.linearAcc, self.angularAcc
             )
             print("CORRECTNG ATTITUDE WITH THRUST", thrustValues)
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
         print("COMPLETED DIVE TO DEPTH", self.desiredDepth)
         return "done"

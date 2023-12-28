@@ -33,6 +33,7 @@ setup(
             "attitudeControl = controls_core.attitude_control_test:main",
             "imu_zeroing = controls_core.imu_zeroing:main",
             "control_signals = controls_core.cv_to_controls_processing:main",
+            "dummy_data = controls_core.dummy_data:main",
         ],
     },
 )

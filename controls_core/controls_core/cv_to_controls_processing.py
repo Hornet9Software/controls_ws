@@ -14,8 +14,8 @@ class CVToControlsSignals(Node):
         self.objectPublishers = {}
         self.listeners = {}
 
-        self.IMAGE_WIDTH_PIXELS = 640
-        self.IMAGE_HEIGHT_PIXELS = 640
+        self.IMAGE_WIDTH_PIXELS = 1.0
+        self.IMAGE_HEIGHT_PIXELS = 1.0
         self.IMAGE_CENTROID = (
             self.IMAGE_WIDTH_PIXELS / 2.0,
             self.IMAGE_HEIGHT_PIXELS / 2.0,
@@ -24,12 +24,10 @@ class CVToControlsSignals(Node):
         self.HFOV = math.radians(50.7)
         self.VFOV = math.radians(37.7)
 
-        # TODO add structure to topic name for bounding boxes, so that can generalise like the publishers
-
         for objectName in objects:
             self.listeners[objectName] = self.create_subscription(
                 Float32MultiArray,
-                "/left/yolo/box",
+                "/object/" + objectName + "/yolo",
                 lambda msg: self.bbox_callback(objectName, msg),
                 10,
             )
@@ -44,10 +42,15 @@ class CVToControlsSignals(Node):
         objectWidth = self.OBJECT_DIMENSIONS[objectName][0]
         objectHeight = self.OBJECT_DIMENSIONS[objectName][1]
 
-        xMin = msg.data[0]
-        yMax = msg.data[1]
-        xMax = msg.data[2]
-        yMin = msg.data[3]
+        x_centre = msg.data[0]
+        y_centre = msg.data[1]
+        w = msg.data[2]
+        h = msg.data[3]
+
+        xMin = x_centre - w / 2.0
+        xMax = x_centre + w / 2.0
+        yMin = y_centre - h / 2.0
+        yMax = y_centre + h / 2.0
 
         objectWidthPixels = xMax - xMin
         objectHeightPixels = yMax - yMin
