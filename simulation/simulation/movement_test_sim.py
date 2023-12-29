@@ -2,7 +2,8 @@
 
 import rclpy
 import smach
-from tasks.movement_tasks_simulation import *
+from simulation.movement_tasks_sim import *
+from simulation.thrusters_sim import *
 
 
 def main():
@@ -13,14 +14,17 @@ def main():
     with sm:
         smach.StateMachine.add(
             "Depth PID Tuning",
-            DiveToDepth(desiredDepth=-1.5, tolerance=0.05),
+            DiveToDepth(desiredDepth=-2.5, tolerance=0.05),
             transitions={"done": "finish"},
         )
 
     try:
         sm.execute()
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        clpy.try_shutdown()
+        thrusterControl = ThrusterControl()
+        thrusterControl.killThrusters()
+
+    rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

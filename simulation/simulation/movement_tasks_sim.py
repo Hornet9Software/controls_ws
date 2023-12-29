@@ -13,8 +13,8 @@ from controls_core.position_control import PositionControl
 from controls_core.params import *
 from controls_core.PID import PIDTuner
 
-from thrusters.thrusters import ThrusterControl
-from controls_core.thruster_allocator import ThrustAllocator
+from simulation.thrusters_sim import ThrusterControl
+from simulation.thrusters_sim import ThrustAllocator
 
 import controls_core.utilities as utilities
 from controls_core.utilities import pos_to_list, quat_to_list

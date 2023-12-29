@@ -21,6 +21,7 @@ def main():
     try:
         sm.execute()
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        thrusterControl = ThrusterControl()
         thrusterControl.killThrusters()
 
     rclpy.try_shutdown()
