@@ -9,4 +9,4 @@ depthPID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 
 
 UPTHRUST = 1
-IMU_ZERO = [0.0, 0.0, 1.51]
+IMU_ZERO = [0.0, 0.0, 0.50]
