@@ -67,7 +67,7 @@ class MoveLinearlyForTime(Task):
                     desiredDepth=self.desiredDepth,
                 )
 
-                self.linearAcc[2] += UPTHRUST
+                # self.linearAcc[2] += UPTHRUST
 
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc
@@ -466,7 +466,7 @@ class DiveToDepth(Task):
                     desiredDepth=self.desiredDepth,
                 )
 
-                self.linearAcc[2] += UPTHRUST
+                # self.linearAcc[2] += UPTHRUST
 
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc

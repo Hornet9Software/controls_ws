@@ -17,18 +17,19 @@ def main():
             "DIVE_TO_DEPTH",
             DiveToDepth(desiredDepth=-1.0, tolerance=0.05),
             # transitions={"done": "ROTATE_TO_YAW"},
-            transitions={"done": "finish"},
+            # transitions={"done": "finish"},
+            transitions={"done": "MOVE_STRAIGHT"},
         )
         # smach.StateMachine.add(
         #     "ROTATE_TO_YAW",
         #     RotateToYaw(desiredYaw=math.radians(90.0), tolerance=0.1),
         #     transitions={"done": "MOVE_STRAIGHT"},
         # )
-        # smach.StateMachine.add(
-        #     "MOVE_STRAIGHT",
-        #     MoveLinearlyForTime(time_to_move=30.0, yAcc=1.0, desiredDepth=-1.0),
-        #     transitions={"done": "finish"},
-        # )
+        smach.StateMachine.add(
+            "MOVE_STRAIGHT",
+            MoveLinearlyForTime(timeToMove=30.0, yAcc=1.0, desiredDepth=-1.0),
+            transitions={"done": "finish"},
+        )
 
     try:
         sm.execute()
