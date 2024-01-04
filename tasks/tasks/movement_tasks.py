@@ -20,6 +20,111 @@ import controls_core.utilities as utilities
 from controls_core.utilities import pos_to_list, quat_to_list
 
 
+class MoveLinearlyForTime(Task):
+    def __init__(self, time_to_move, linearAcc):
+        super().__init__(task_name="move_linearly_for_time", outcomes=["done"])
+        self.time_to_move = time_to_move
+        self.linearAcc = linearAcc
+
+    def execute(self, ud):
+        self.thrusterControl = ThrusterControl()
+        self.thrustAllocator = ThrustAllocator()
+
+        self.angularAcc = [0.0, 0.0, 0.0]
+
+        return super().execute(ud)
+
+    def run(self, ud):
+        self.task_state.create_rate(100)
+
+        print("INITIALISING MOVEMENT WITH LINEAR ACC", self.linearAcc)
+        print()
+
+        starting_time = time.time()
+
+        while (time.time() - starting_time) < self.time_to_move:
+            rclpy.spin_once(self.task_state)
+
+            thrustValues = self.thrustAllocator.getThrustPWMs(
+                self.linearAcc, self.angularAcc
+            )
+            self.thrusterControl.setThrusters(thrustValues=thrustValues)
+            print("CORRECTNG WITH THRUST", thrustValues)
+            print("\n=========\n")
+
+        print(
+            "COMPLETED LINEAR MOVEMENT WITH LINEAR ACC",
+            self.linearAcc,
+            "\n\n=========\n",
+        )
+        return "done"
+
+
+class RotateToYaw(Task):
+    def __init__(self, desiredYaw, tolerance):
+        super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
+        self.desiredYaw = desiredYaw
+        self.tolerance = tolerance
+        self.prevTime = time.time()
+        self.prevYaw = 0.0
+
+    def execute(self, ud):
+        self.thrusterControl = ThrusterControl()
+        self.thrustAllocator = ThrustAllocator()
+
+        self.currentRPY = [0.0, 0.0, 0.0]
+        self.linearAcc = [0.0, 0.0, 0.0]
+
+        self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=yawPID)
+
+        return super().execute(ud)
+
+    def stopped_at_bearing(self, currentRPY):
+        currTime = time.time()
+        omega_z = (currentRPY - self.prevYaw) / (currTime - self.prevTime)
+        self.prevYaw = currentRPY
+        self.prevTime = currTime
+
+        return (math.fabs(currentRPY - self.desiredYaw) <= self.tolerance) and (
+            math.fabs(omega_z) <= self.tolerance
+        )
+
+    def run(self, ud):
+        self.task_state.create_rate(100)
+
+        print("INITIALISING ROTATION TO YAW", self.desiredYaw)
+        print()
+
+        while True:
+            rclpy.spin_once(self.task_state)
+
+            while self.state["yaw"] is None:
+                rclpy.spin_once(self.task_state)
+
+            if not self.stopped_at_bearing(self.state["yaw"]):
+                self.currentRPY = list(self.state.values())
+                targetRPY = list(self.state.values())
+                targetRPY[2] = self.desiredYaw
+                attCorr = self.attitudeControl.getAttitudeCorrection(
+                    currAttRPY=self.currentRPY, targetAttRPY=targetRPY
+                )
+                print("ATTITUDE CORRECTION TO DESIRED YAW", attCorr)
+
+                thrustValues = self.thrustAllocator.getThrustPWMs(
+                    self.linearAcc, attCorr
+                )
+                self.thrusterControl.setThrusters(thrustValues=thrustValues)
+                print("CORRECTNG WITH THRUST", thrustValues)
+                print("\n=========\n")
+            else:
+                print(
+                    "COMPLETED ROTATION TO YAW",
+                    self.desiredYaw,
+                    "\n\n=========\n",
+                )
+                return "done"
+
+
 class RotateToObject(Task):
     def __init__(self, objectName, tolerance):
         super().__init__(task_name="rotate_to_object", outcomes=["done"])
@@ -275,6 +380,8 @@ class DiveToDepth(Task):
     def __init__(self, desiredDepth, tolerance):
         super().__init__(task_name="dive_to_depth", outcomes=["done"])
         self.desiredDepth = desiredDepth
+        self.prevDepth = self.depth
+        self.prevTime = time.time()
         self.tolerance = tolerance
 
     def execute(self, ud):
@@ -296,7 +403,14 @@ class DiveToDepth(Task):
         return super().execute(ud)
 
     def stopped_at_position(self, currentDepth):
-        return math.fabs(currentDepth - self.desiredDepth) <= self.tolerance
+        currTime = time.time()
+        vz = (currentDepth - self.prevDepth) / (currTime - self.prevTime)
+        self.prevDepth = currentDepth
+        self.prevTime = currTime
+
+        return (math.fabs(currentDepth - self.desiredDepth) <= self.tolerance) and (
+            math.fabs(vz) <= self.tolerance
+        )
 
     def run(self, ud):
         self.task_state.create_rate(100)

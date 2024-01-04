@@ -9,13 +9,24 @@ from scipy.spatial.transform import Rotation as R
 
 
 class Simulation(Node):
-    def __init__(self, linPos_0=[0.0, 0.0, 0.0], angPos_0=[0.0, 0.0, 0.0], dt=0.01):
+    def __init__(
+        self, linPos_0=[0.0, 0.0, 0.0], angPos_0=[0.0, 0.0, math.radians(45.0)], dt=0.01
+    ):
         super().__init__("simulation")
 
         self.dt = dt
 
-        # (x, y, z, 1) of left and right endpoint
-        self.gate = np.array([[10, 10, 0.5, 1.0], [11.5, 10, 0.5, 1.0]])
+        # (x, y, z, 1) of upper left, upper right, bottom left, bottom right endpoint
+        self.gate = np.array(
+            [
+                [10, 10, 0.5, 1.0],
+                [11.5, 10, 0.5, 1.0],
+                [
+                    10.0,
+                    10.0,
+                ],
+            ]
+        )
 
         self.HFOV = math.radians(50.7)
         self.leftBoundaryTf = R.from_euler("z", -self.HFOV / 2)
@@ -51,12 +62,15 @@ class Simulation(Node):
 
         return [left, centre, right]
 
+    def boundAngle(self, angle):
+        return angle % (2 * math.pi)
+
     def physicsLoop(self):
         self.linVel += self.linAcc * self.dt
         self.angVel += self.angAcc * self.dt
 
         self.linPos += self.linVel * self.dt
-        self.angPos += self.angPos * self.dt
+        self.angPos += self.boundAngle(self.angPos * self.dt)
 
         depth = Float32()
         depth.data = self.linPos[2]
@@ -64,20 +78,19 @@ class Simulation(Node):
 
         left, centre, right = self.getCone()
 
-        f = 1.0 / (2.0 * math.tan(self.HFOV / 2.0))
-        cx = 0.5
-        cy = 0.5
+        fx = 2600
+        fy = 2600
+        kx = 1
+        ky = 1
+        cx = 320
+        cy = 320
 
-        P = np.array([[f, 0.0, cx], [0.0, f, cy], [0.0, 0.0, 1.0]])
+        C = np.array([[f, 0.0, cx], [0.0, f, cy], [0.0, 0.0, 1.0]])
 
         world_to_camera_rot = R.from_euler("xyz", self.angPos).as_matrix()
         world_to_camera_T = np.expand_dims(self.linPos, axis=1)
-        lastRow = np.zeros((1, world_to_camera_rot.shape[1] + 1))
-        lastRow[0, -1] = 1
-        tf = np.concatenate((world_to_camera_rot, world_to_camera_T), axis=1)
-        T = np.concatenate((tf, lastRow), axis=0)
-
-        proj = np.matmul(P, T)
+        T = np.concatenate((world_to_camera_rot, world_to_camera_T), axis=1)
+        proj = np.matmul(C, T)
         pixels = np.matmul(proj, self.gate.T).T
 
         left = pixels[0]

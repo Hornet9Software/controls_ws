@@ -2,12 +2,13 @@
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose, Twist
 from nav_msgs.msg import Odometry
+from imu_msg.msg import Imu
 from rclpy.node import Node
 
 
 # Note: Because these are rclpy Nodes, for them to be 'alive' and usable, after creating them, we still have to spin_once/spin
 class TaskState(Node):
-    STATE_TOPIC = "/state"
+    STATE_TOPIC = "/sensors/imu"
     DESIRED_POSE_TOPIC = "/controls/desired_pose"
     DESIRED_TWIST_VELOCITY_TOPIC = "/controls/desired_twist"
     CV_TOPICS = ["gate"]
@@ -16,7 +17,7 @@ class TaskState(Node):
     def __init__(self, task_name: str):
         super().__init__(f"{task_name}_node")
         self.state_listener = self.create_subscription(
-            Odometry, self.STATE_TOPIC, self._on_receive_state, 10
+            Imu, self.STATE_TOPIC, self._on_receive_state, 10
         )
 
         self.depth_listener = self.create_subscription(
@@ -32,7 +33,7 @@ class TaskState(Node):
         )
 
         self.depth = None
-        self.state = None
+        self.state = {"roll": None, "pitch": None, "yaw": None}
         self.cv_data = {}
         for objectName in self.CV_TOPICS:
             self.cv_data[objectName] = {}
@@ -46,8 +47,12 @@ class TaskState(Node):
                     10,
                 )
 
-    def _on_receive_state(self, state: Odometry):
-        self.state = state
+    def _on_receive_state(self, msg: Imu):
+        self.state = {
+            "roll": msg.roll_pitch_yaw.x,
+            "pitch": msg.roll_pitch_yaw.y,
+            "yaw": msg.roll_pitch_yaw.z,
+        }
 
     def _on_receive_depth(self, msg):
         self.depth = msg.data

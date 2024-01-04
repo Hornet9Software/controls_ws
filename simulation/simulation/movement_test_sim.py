@@ -14,7 +14,7 @@ def main():
     with sm:
         smach.StateMachine.add(
             "Depth PID Tuning",
-            DiveToDepth(desiredDepth=-2.5, tolerance=0.05),
+            DiveToDepth(desiredDepth=-1.5, tolerance=0.05),
             transitions={"done": "finish"},
         )
 
