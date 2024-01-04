@@ -21,10 +21,11 @@ from controls_core.utilities import pos_to_list, quat_to_list
 
 
 class MoveLinearlyForTime(Task):
-    def __init__(self, time_to_move, linearAcc):
+    def __init__(self, timeToMove, yAcc, desiredDepth):
         super().__init__(task_name="move_linearly_for_time", outcomes=["done"])
-        self.time_to_move = time_to_move
-        self.linearAcc = linearAcc
+        self.timeToMove = timeToMove
+        self.yAcc = yAcc
+        self.desiredDepth = desiredDepth
 
     def execute(self, ud):
         self.thrusterControl = ThrusterControl()
@@ -32,32 +33,55 @@ class MoveLinearlyForTime(Task):
 
         self.angularAcc = [0.0, 0.0, 0.0]
 
+        self.positionControl = PositionControl(
+            distancePID=moveStraightPID, lateralPID=lateralPID, depthPID=depthPID
+        )
+
         return super().execute(ud)
 
     def run(self, ud):
         self.task_state.create_rate(100)
 
-        print("INITIALISING MOVEMENT WITH LINEAR ACC", self.linearAcc)
+        print("INITIALISING MOVEMENT WITH Y ACC", self.yAcc)
         print()
 
-        starting_time = time.time()
+        startingTime = time.time()
 
-        while (time.time() - starting_time) < self.time_to_move:
+        while True:
             rclpy.spin_once(self.task_state)
 
-            thrustValues = self.thrustAllocator.getThrustPWMs(
-                self.linearAcc, self.angularAcc
-            )
-            self.thrusterControl.setThrusters(thrustValues=thrustValues)
-            print("CORRECTNG WITH THRUST", thrustValues)
-            print("\n=========\n")
+            while self.depth is None:
+                rclpy.spin_once(self.task_state)
 
-        print(
-            "COMPLETED LINEAR MOVEMENT WITH LINEAR ACC",
-            self.linearAcc,
-            "\n\n=========\n",
-        )
-        return "done"
+            currTime = time.time()
+
+            if (currTime - startingTime) < self.timeToMove:
+                print("THRUSTING FOR", currTime - startingTime, "MORE SECONDS")
+
+                self.linearAcc = self.positionControl.getPositonCorrection(
+                    currDistance=self.yAcc,
+                    desiredDistance=0.0,
+                    currLateral=0.0,
+                    desiredLateral=0.0,
+                    currDepth=self.depth,
+                    desiredDepth=self.desiredDepth,
+                )
+
+                self.linearAcc[2] += UPTHRUST
+
+                thrustValues = self.thrustAllocator.getThrustPWMs(
+                    self.linearAcc, self.angularAcc
+                )
+                self.thrusterControl.setThrusters(thrustValues=thrustValues)
+                print("CORRECTNG WITH THRUST", thrustValues)
+                print("\n=========\n")
+            else:
+                print(
+                    "COMPLETED LINEAR MOVEMENT WITH LINEAR ACC",
+                    self.linearAcc,
+                    "\n\n=========\n",
+                )
+                return "done"
 
 
 class RotateToYaw(Task):
@@ -73,19 +97,19 @@ class RotateToYaw(Task):
         self.thrustAllocator = ThrustAllocator()
 
         self.currentRPY = [0.0, 0.0, 0.0]
-        self.linearAcc = [0.0, 0.0, 0.0]
+        self.linearAcc = [0.0, 0.0, UPTHRUST]
 
         self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=yawPID)
 
         return super().execute(ud)
 
-    def stopped_at_bearing(self, currentRPY):
+    def stopped_at_bearing(self, currentYaw):
         currTime = time.time()
-        omega_z = (currentRPY - self.prevYaw) / (currTime - self.prevTime)
-        self.prevYaw = currentRPY
+        omega_z = (currentYaw - self.prevYaw) / (currTime - self.prevTime)
+        self.prevYaw = currentYaw
         self.prevTime = currTime
 
-        return (math.fabs(currentRPY - self.desiredYaw) <= self.tolerance) and (
+        return (math.fabs(currentYaw - self.desiredYaw) <= self.tolerance) and (
             math.fabs(omega_z) <= self.tolerance
         )
 
@@ -136,7 +160,7 @@ class RotateToObject(Task):
         self.thrustAllocator = ThrustAllocator()
 
         self.currentBearing = [0.0, 0.0, 90.0]
-        self.linearAcc = [0.0, 0.0, 0.0]
+        self.linearAcc = [0.0, 0.0, UPTHRUST]
 
         self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=cameraSteerPID)
 
@@ -225,6 +249,8 @@ class LateralShiftToObject(Task):
                     currDepth=0.0,
                     desiredDepth=0.0,
                 )
+                self.linearAcc[2] += UPTHRUST
+
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc
                 )
@@ -301,6 +327,7 @@ class AlignToObject(Task):
                     currDepth=0.0,
                     desiredDepth=0.0,
                 )
+                self.linearAcc[2] += UPTHRUST
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc
                 )
@@ -363,6 +390,9 @@ class MoveStraightToObject(Task):
                     currDepth=0.0,
                     desiredDepth=0.0,
                 )
+
+                self.linearAcc[2] += UPTHRUST
+
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc
                 )
@@ -380,7 +410,7 @@ class DiveToDepth(Task):
     def __init__(self, desiredDepth, tolerance):
         super().__init__(task_name="dive_to_depth", outcomes=["done"])
         self.desiredDepth = desiredDepth
-        self.prevDepth = self.depth
+        self.prevDepth = 0.0
         self.prevTime = time.time()
         self.tolerance = tolerance
 
@@ -396,9 +426,9 @@ class DiveToDepth(Task):
             distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
         )
 
-        threading.Thread(
-            target=PIDTuner, args=[self.positionControl.distancePID], daemon=True
-        ).start()
+        # threading.Thread(
+        #     target=PIDTuner, args=[self.positionControl.distancePID], daemon=True
+        # ).start()
 
         return super().execute(ud)
 
@@ -435,6 +465,9 @@ class DiveToDepth(Task):
                     currDepth=self.depth,
                     desiredDepth=self.desiredDepth,
                 )
+
+                self.linearAcc[2] += UPTHRUST
+
                 thrustValues = self.thrustAllocator.getThrustPWMs(
                     self.linearAcc, self.angularAcc
                 )
