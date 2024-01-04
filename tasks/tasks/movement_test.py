@@ -27,7 +27,7 @@ def main():
         # )
         # smach.StateMachine.add(
         #     "MOVE_STRAIGHT",
-        #     MoveLinearlyForTime(time_to_move=30.0, linearAcc=[0.0, 1.0, 0.0]),
+        #     MoveLinearlyForTime(time_to_move=30.0, yAcc=1.0, desiredDepth=-1.0),
         #     transitions={"done": "finish"},
         # )
 
