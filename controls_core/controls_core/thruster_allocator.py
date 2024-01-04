@@ -82,7 +82,7 @@ class ThrustAllocator:
         self.expected_torque = self.I * angular_accelerations
         self.goal = np.concatenate((self.expected_force, self.expected_torque))
 
-        THRUSTER_CAP = 0.5
+        THRUSTER_CAP = 0.1
 
         lb = THRUSTER_CAP * (np.min(self.thrust_map[:, 0]) + 0.1)
         ub = THRUSTER_CAP * (np.max(self.thrust_map[:, 0]) - 0.1)
