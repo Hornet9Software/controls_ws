@@ -1,23 +1,20 @@
 import math
-import time
 import threading
+import time
 
+import controls_core.utilities as utilities
 import rclpy
+from controls_core.attitude_control import AttitudeControl
+from controls_core.params import *
+from controls_core.PID import PIDTuner
+from controls_core.position_control import PositionControl
+from controls_core.thruster_allocator import ThrustAllocator
+from controls_core.utilities import pos_to_list, quat_to_list
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from nav_msgs.msg import Odometry
 from tasks.task import Task
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
-
-from controls_core.attitude_control import AttitudeControl
-from controls_core.position_control import PositionControl
-from controls_core.params import *
-from controls_core.PID import PIDTuner
-
 from thrusters.thrusters import ThrusterControl
-from controls_core.thruster_allocator import ThrustAllocator
-
-import controls_core.utilities as utilities
-from controls_core.utilities import pos_to_list, quat_to_list
 
 
 class MoveLinearlyForTime(Task):
@@ -380,7 +377,7 @@ class DiveToDepth(Task):
     def __init__(self, desiredDepth, tolerance):
         super().__init__(task_name="dive_to_depth", outcomes=["done"])
         self.desiredDepth = desiredDepth
-        self.prevDepth = self.depth
+        self.prevDepth = 0.0
         self.prevTime = time.time()
         self.tolerance = tolerance
 
