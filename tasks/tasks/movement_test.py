@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import math
+
 import rclpy
 import smach
-import math
 from tasks.movement_tasks import *
 from thrusters.thrusters import ThrusterControl
 
