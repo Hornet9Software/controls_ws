@@ -1,602 +1,345 @@
 import math
 import threading
 import time
-
-import controls_core.utilities as utilities
 import rclpy
-from controls_core.attitude_control import AttitudeControl
+import controls_core.utilities as utilities
+
 from controls_core.params import *
 from controls_core.PID import PIDTuner
-from controls_core.position_control import PositionControl
-from controls_core.thruster_allocator import ThrustAllocator
-from controls_core.utilities import pos_to_list, quat_to_list
-from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
-from nav_msgs.msg import Odometry
+
+from custom_msgs.msg import Correction
+
 from tasks.task import Task
-from tf_transformations import euler_from_quaternion, quaternion_from_euler
-from thrusters.thrusters import ThrusterControl
 
+"""
+CONVENTIONS
 
-class MoveLinearlyForTime(Task):
-    def __init__(self, timeToMove, yAcc, desiredDepth):
-        super().__init__(task_name="move_linearly_for_time", outcomes=["done"])
-        self.timeToMove = timeToMove
-        self.yAcc = yAcc
-        self.desiredDepth = desiredDepth
+Vehicle forward is along +y.
 
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
+Any roll/pitch/yaw variable refers to the usual sense of RPY with respect to the vehicle's DOFs.
+Any angular xyz variable refers to euler angles w.r.t. the coordinate frame.
 
-        self.angularAcc = [0.0, 0.0, 0.0]
-
-        self.positionControl = PositionControl(
-            distancePID=moveStraightPID, lateralPID=lateralPID, depthPID=depthPID
-        )
-
-        return super().execute(ud)
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING MOVEMENT WITH Y ACC", self.yAcc)
-        print()
-
-        startingTime = time.time()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while self.depth is None:
-                rclpy.spin_once(self.task_state)
-
-            currTime = time.time()
-
-            if (currTime - startingTime) < self.timeToMove:
-                print("THRUSTING FOR", currTime - startingTime, "MORE SECONDS")
-
-                self.linearAcc = self.positionControl.getPositonCorrection(
-                    currDistance=self.yAcc,
-                    desiredDistance=0.0,
-                    currLateral=0.0,
-                    desiredLateral=0.0,
-                    currDepth=self.depth,
-                    desiredDepth=self.desiredDepth,
-                )
-
-                # self.linearAcc[2] += UPTHRUST
-
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, self.angularAcc
-                )
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-            else:
-                print(
-                    "COMPLETED LINEAR MOVEMENT WITH LINEAR ACC",
-                    self.linearAcc,
-                    "\n\n=========\n",
-                )
-                return "done"
-
-
-class RotateToYaw(Task):
-    def __init__(self, desiredYaw, tolerance):
-        super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
-        self.desiredYaw = desiredYaw
-        self.tolerance = tolerance
-        self.prevTime = time.time()
-        self.prevYaw = 0.0
-
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
-
-        self.currentRPY = [0.0, 0.0, 0.0]
-        self.linearAcc = [0.0, 0.0, UPTHRUST]
-
-        self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=yawPID)
-
-        return super().execute(ud)
-
-    def stopped_at_bearing(self, currentYaw):
-        currTime = time.time()
-        omega_z = (currentYaw - self.prevYaw) / (currTime - self.prevTime)
-        self.prevYaw = currentYaw
-        self.prevTime = currTime
-
-        return (math.fabs(currentYaw - self.desiredYaw) <= self.tolerance) and (
-            math.fabs(omega_z) <= self.tolerance
-        )
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING ROTATION TO YAW", self.desiredYaw)
-        print()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while self.state["yaw"] is None:
-                rclpy.spin_once(self.task_state)
-
-            if not self.stopped_at_bearing(self.state["yaw"]):
-                self.currentRPY = list(self.state.values())
-                targetRPY = list(self.state.values())
-                targetRPY[2] = self.desiredYaw
-                attCorr = self.attitudeControl.getAttitudeCorrection(
-                    currAttRPY=self.currentRPY, targetAttRPY=targetRPY
-                )
-                print("ATTITUDE CORRECTION TO DESIRED YAW", attCorr)
-
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, attCorr
-                )
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-            else:
-                print(
-                    "COMPLETED ROTATION TO YAW",
-                    self.desiredYaw,
-                    "\n\n=========\n",
-                )
-                return "done"
-
-
-class RotateToObject(Task):
-    def __init__(self, objectName, tolerance):
-        super().__init__(task_name="rotate_to_object", outcomes=["done"])
-        self.objectName = objectName
-        self.tolerance = tolerance
-
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
-
-        self.currentBearing = [0.0, 0.0, 90.0]
-        self.linearAcc = [0.0, 0.0, UPTHRUST]
-
-        self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=cameraSteerPID)
-
-        return super().execute(ud)
-
-    def stopped_at_bearing(self, currentBearing):
-        return math.fabs(currentBearing) <= self.tolerance
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING ROTATION TO OBJECT", self.objectName)
-        print()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while self.cv_data[self.objectName]["bearing"] is None:
-                rclpy.spin_once(self.task_state)
-
-            if not self.stopped_at_bearing(self.cv_data[self.objectName]["bearing"]):
-                self.currentBearing[2] = self.cv_data[self.objectName]["bearing"]
-
-                attCorr = self.attitudeControl.getSteer(self.currentBearing)
-                print("ATTITUDE CORRECTION TO OBJECT", self.objectName, attCorr)
-
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, attCorr
-                )
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-            else:
-                print(
-                    "COMPLETED ROTATION TO OBJECT",
-                    self.objectName,
-                    "\n\n=========\n",
-                )
-                return "done"
-
-
-class LateralShiftToObject(Task):
-    def __init__(self, objectName, tolerance):
-        super().__init__(task_name="lateral_shift_to_object", outcomes=["done"])
-        self.objectName = objectName
-        self.tolerance = tolerance
-
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
-
-        self.angularAcc = [0.0, 0.0, 0.0]
-        self.linearAcc = [1.0, 0.0, 0.0]
-        self.currLateral = 90.0
-
-        self.positionControl = PositionControl(
-            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
-        )
-
-        return super().execute(ud)
-
-    def stopped_at_position(self, currentLateral):
-        return math.fabs(currentLateral) <= self.tolerance
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING LATERAL SHIFT TO OBJECT", self.objectName)
-        print()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while self.cv_data[self.objectName]["lateral"] is None:
-                rclpy.spin_once(self.task_state)
-
-            if not self.stopped_at_position(self.cv_data[self.objectName]["lateral"]):
-                self.currLateral = self.cv_data[self.objectName]["lateral"]
-                print("LATERAL CORRECTION TO OBJECT", self.objectName, self.currLateral)
-
-                self.linearAcc = self.positionControl.getPositonCorrection(
-                    currDistance=0.0,
-                    desiredDistance=0.0,
-                    currLateral=self.currLateral,
-                    desiredLateral=0.0,
-                    currDepth=0.0,
-                    desiredDepth=0.0,
-                )
-                self.linearAcc[2] += UPTHRUST
-
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, self.angularAcc
-                )
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-            else:
-                print(
-                    "COMPLETED LATERAL SHIFT TO OBJECT",
-                    self.objectName,
-                    "\n\n=========\n",
-                )
-                return "done"
-
-
-class AlignToObject(Task):
-    def __init__(
-        self,
-        objectName,
-        rotate=True,
-        lateral=True,
-        bearingTolerance=0.05,
-        lateralTolerance=0.05,
-    ):
-        super().__init__(task_name="align_to_object", outcomes=["done"])
-        self.objectName = objectName
-        self.rotate = rotate
-        self.lateral = lateral
-
-        self.bearingTolerance = bearingTolerance
-        self.lateralTolerance = lateralTolerance
-
-        self.prevTime = time.time()
-        self.prevBearing = 0.0
-        self.prevLateral = 0.0
-
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
-
-        self.currentBearing = [0.0, 0.0, 90.0]
-        self.linearAcc = [1.0, 0.0, 0.0]
-        self.currLateral = 90.0
-
-        self.attitudeControl = AttitudeControl(rollPID=rollPID, yawPID=cameraSteerPID)
-        self.positionControl = PositionControl(
-            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
-        )
-
-        return super().execute(ud)
-
-    def stopped(self, currentBearing, currentLateral):
-        if self.rotate:
-            pass
-        return math.fabs(currentBearing) <= self.bearingTolerance
-
-    def stopped_at_position(self, currentLateral):
-        return math.fabs(currentLateral) <= self.lateralTolerance
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING ALIGN TO OBJECT", self.objectName)
-        print()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while (self.cv_data[self.objectName]["bearing"] is None) or (
-                self.cv_data[self.objectName]["lateral"] is None
-            ):
-                rclpy.spin_once(self.task_state)
-
-            if not (
-                self.stopped_at_bearing(self.cv_data[self.objectName]["bearing"])
-                and self.stopped_at_position(self.cv_data[self.objectName]["lateral"])
-            ):
-                self.currentBearing[2] = self.cv_data[self.objectName]["bearing"]
-                self.currLateral = self.cv_data[self.objectName]["lateral"]
-
-                print("CURRENT BEARING", self.currentBearing[2])
-                print("CURRENT LATERAL", self.currLateral)
-
-                self.angularAcc = self.attitudeControl.getSteer(self.currentBearing)
-                self.linearAcc = self.positionControl.getPositonCorrection(
-                    currDistance=0.0,
-                    desiredDistance=0.0,
-                    currLateral=self.currLateral,
-                    desiredLateral=0.0,
-                    currDepth=0.0,
-                    desiredDepth=0.0,
-                )
-                self.linearAcc[2] += UPTHRUST
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, self.angularAcc
-                )
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-            else:
-                print(
-                    "COMPLETED ALIGNMENT TO OBJECT", self.objectName, "\n\n=========\n"
-                )
-                return "done"
-
-
-class MoveStraightToObject(Task):
-    def __init__(self, objectName, tolerance):
-        super().__init__(task_name="move_straight_to_object", outcomes=["done"])
-        self.objectName = objectName
-        self.tolerance = tolerance
-
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
-
-        self.angularAcc = [0.0, 0.0, 0.0]
-        self.linearAcc = [0.0, 1.0, 0.0]
-        self.currLateral = 0.0
-
-        self.positionControl = PositionControl(
-            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
-        )
-
-        return super().execute(ud)
-
-    def stopped_at_position(self, currentDistance):
-        return math.fabs(currentDistance) <= self.tolerance
-
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING MOVEMENT TO OBJECT", self.objectName)
-        print()
-
-        while True:
-            rclpy.spin_once(self.task_state)
-
-            while self.cv_data[self.objectName]["distance"] is None:
-                rclpy.spin_once(self.task_state)
-
-            if not self.stopped_at_position(self.cv_data[self.objectName]["distance"]):
-                self.currDistance = self.cv_data[self.objectName]["distance"]
-                print(
-                    "DISTANCE CORRECTION TO OBJECT", self.objectName, self.currDistance
-                )
-
-                self.linearAcc = self.positionControl.getPositonCorrection(
-                    currDistance=self.currDistance,
-                    desiredDistance=0.0,
-                    currLateral=0.0,
-                    desiredLateral=0.0,
-                    currDepth=0.0,
-                    desiredDepth=0.0,
-                )
-
-                self.linearAcc[2] += UPTHRUST
-
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, self.angularAcc
-                )
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
-            else:
-                print(
-                    "COMPLETED MOVEMENT TO OBJECT", self.objectName, "\n\n=========\n"
-                )
-                return "done"
+For clarity,
+roll = angular_position.y
+pitch = angular_position.x
+"""
 
 
 class DiveToDepth(Task):
-    def __init__(self, desiredDepth, tolerance):
+    def __init__(self, targetDepth, tolerance=0.1, setYaw=None):
         super().__init__(task_name="dive_to_depth", outcomes=["done"])
-        self.desiredDepth = desiredDepth
+
+        self.task_state.create_rate(100)
+        rclpy.spin_once(self.task_state)
+
+        self.targetDepth = targetDepth
+
+        self.setRoll = 0.0
+
+        if not setYaw:
+            self.setYaw = self.state.angular_position.z
+
+        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetXYZ = [0.0, 0.0, self.targetDepth]
+
         self.prevDepth = 0.0
         self.prevTime = time.time()
+
         self.tolerance = tolerance
 
-    def execute(self, ud):
-        self.thrusterControl = ThrusterControl()
-        self.thrustAllocator = ThrustAllocator()
+    def stopped_at_position(self, currDepth):
+        currTime = time.time()
+        vz = (currDepth - self.prevDepth) / (currTime - self.prevTime)
+        self.prevDepth = currDepth
+        self.prevTime = currTime
 
-        self.angularAcc = [0.0, 0.0, 0.0]
-        self.linearAcc = [0.0, 0.0, 1.0]
-        self.currLateral = 0.0
-
-        self.positionControl = PositionControl(
-            distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
+        return (math.fabs(currDepth - self.targetDepth) <= self.tolerance) and (
+            math.fabs(vz) <= self.tolerance
         )
 
+    def execute(self, ud):
+        print("INITIALISING DIVE TO DEPTH", self.targetDepth)
+        print()
         # threading.Thread(
         #     target=PIDTuner, args=[self.positionControl.distancePID], daemon=True
         # ).start()
 
         return super().execute(ud)
 
-    def stopped_at_position(self, currentDepth):
+    def run(self, ud):
+        while True:
+            rclpy.spin_once(self.task_state)
+
+            while self.state is None:
+                rclpy.spin_once(self.task_state)
+
+            self.currRPY = [
+                self.state.angular_position.y,
+                self.state.angular_position.x,
+                self.state.angular_position.z,
+            ]
+
+            self.currXYZ = [0.0, 0.0, self.depth]
+
+            if not self.stopped_at_position(self.currXYZ[2]):
+                print("CURRENT DEPTH", self.depth)
+
+                corr = Correction()
+
+                corr.targetRPY.data = self.targetRPY
+                corr.targetXYZ.data = self.targetXYZ
+                corr.currRPY.data = self.currRPY
+                corr.currXYZ.data = self.currXYZ
+
+                self.publish_correction(corr)
+            else:
+                print("COMPLETED DIVE TO DEPTH", self.targetDepth, "\n\n=========\n")
+                return "done"
+
+
+class RotateToYaw(Task):
+    def __init__(self, targetYaw, tolerance=0.1, setDepth=None):
+        super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
+
+        self.task_state.create_rate(100)
+        rclpy.spin_once(self.task_state)
+
+        self.targetYaw = targetYaw
+
+        self.setRoll = 0.0
+
+        if not setDepth:
+            self.setDepth = self.depth
+
+        self.targetRPY = [self.setRoll, 0.0, self.targetYaw]
+        self.targetXYZ = [0.0, 0.0, self.setDepth]
+
+        self.prevYaw = 0.0
+        self.prevTime = time.time()
+
+        self.tolerance = tolerance
+
+    def stopped_at_bearing(self, currYaw):
         currTime = time.time()
-        vz = (currentDepth - self.prevDepth) / (currTime - self.prevTime)
-        self.prevDepth = currentDepth
+        omega_z = (currYaw - self.prevYaw) / (currTime - self.prevTime)
+        self.prevYaw = currYaw
         self.prevTime = currTime
 
-        return (math.fabs(currentDepth - self.desiredDepth) <= self.tolerance) and (
-            math.fabs(vz) <= self.tolerance
+        return (math.fabs(currYaw - self.targetYaw) <= self.tolerance) and (
+            math.fabs(omega_z) <= self.tolerance
         )
 
-    def run(self, ud):
-        self.task_state.create_rate(100)
-
-        print("INITIALISING DIVE TO DEPTH", self.desiredDepth)
+    def execute(self, ud):
+        print("INITIALISING ROTATION TO YAW", self.targetYaw)
         print()
+
+        return super().execute(ud)
+
+    def run(self, ud):
+        while True:
+            rclpy.spin_once(self.task_state)
+
+            while self.state is None:
+                rclpy.spin_once(self.task_state)
+
+            self.currRPY = [
+                self.state.angular_position.y,
+                self.state.angular_position.x,
+                self.state.angular_position.z,
+            ]
+
+            self.currXYZ = [0.0, 0.0, self.depth]
+
+            if not self.stopped_at_bearing(self.currRPY[2]):
+                print("CURRENT YAW", self.currRPY[2])
+
+                corr = Correction()
+
+                corr.targetRPY.data = self.targetRPY
+                corr.targetXYZ.data = self.targetXYZ
+                corr.currRPY.data = self.currRPY
+                corr.currXYZ.data = self.currXYZ
+
+                self.publish_correction(corr)
+            else:
+                print(
+                    "COMPLETED ROTATION TO YAW",
+                    self.targetYaw,
+                    "\n\n=========\n",
+                )
+                return "done"
+
+
+class MoveStraightForTime(Task):
+    def __init__(self, timeToMove, setDepth=None, setYaw=None):
+        super().__init__(task_name="move_straight_for_time", outcomes=["done"])
+
+        self.task_state.create_rate(100)
+        rclpy.spin_once(self.task_state)
+
+        self.timeToMove = timeToMove
+
+        if not setDepth:
+            self.setDepth = self.depth
+
+        self.setRoll = 0.0
+
+        if not setYaw:
+            self.setYaw = self.state.angular_position.z
+
+        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetXYZ = [0.0, 1.0, self.setDepth]
+
+    def execute(self, ud):
+        print("INITIALISING FORWARD MOVEMENT FOR", self.timeToMove, "SECONDS")
+        print()
+
+        return super().execute(ud)
+
+    def run(self, ud):
+        startingTime = time.time()
 
         while True:
             rclpy.spin_once(self.task_state)
 
-            while self.depth is None:
+            while self.state is None:
                 rclpy.spin_once(self.task_state)
 
-            if not self.stopped_at_position(self.depth):
-                print("CURRENT DEPTH", self.depth)
+            self.currRPY = [
+                self.state.angular_position.y,
+                self.state.angular_position.x,
+                self.state.angular_position.z,
+            ]
 
-                self.linearAcc = self.positionControl.getPositonCorrection(
-                    currDistance=0.0,
-                    desiredDistance=0.0,
-                    currLateral=0.0,
-                    desiredLateral=0.0,
-                    currDepth=self.depth,
-                    desiredDepth=self.desiredDepth,
-                )
+            self.currXYZ = [0.0, 0.0, self.depth]
+            currTime = time.time()
 
-                # self.linearAcc[2] += UPTHRUST
+            if (currTime - startingTime) < self.timeToMove:
+                print("THRUSTING FOR", currTime - startingTime, "MORE SECONDS")
 
-                thrustValues = self.thrustAllocator.getThrustPWMs(
-                    self.linearAcc, self.angularAcc
-                )
-                print("CORRECTNG WITH THRUST", thrustValues)
-                print("\n=========\n")
-                self.thrusterControl.setThrusters(thrustValues=thrustValues)
+                corr = Correction()
+
+                corr.targetRPY.data = self.targetRPY
+                corr.targetXYZ.data = self.targetXYZ
+                corr.currRPY.data = self.currRPY
+                corr.currXYZ.data = self.currXYZ
+
+                self.publish_correction(corr)
             else:
-                print("COMPLETED DIVE TO DEPTH", self.desiredDepth, "\n\n=========\n")
+                print(
+                    "COMPLETED FORWARD MOVEMENT FOR",
+                    self.timeToMove,
+                    "SECONDS",
+                    "\n\n=========\n",
+                )
                 return "done"
 
 
-# # Note: odom is global base_link is local
-# class MoveToPoseGlobalTask(Task):
-#     # Move to pose given in global coordinates
-#     def __init__(self, x, y, z, roll, pitch, yaw):
-#         super().__init__(task_name="move_to_global_task", outcomes=["done"])
+class MoveToGate(Task):
+    def __init__(
+        self,
+        tolerance=0.1,
+        bearingControl=True,
+        lateralControl=True,
+        lateralDirection="right",
+        distanceControl=True,
+        setDepth=-1.0,
+    ):
+        super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
 
-#         self.coords = [x, y, z, roll, pitch, yaw]
+        self.task_state.create_rate(100)
+        rclpy.spin_once(self.task_state)
 
-#     def execute(self, ud):
-#         self.initial_state = self.state
+        self.bearingControl = bearingControl
+        self.lateralControl = lateralControl
+        self.distanceControl = distanceControl
 
-#         # pose from userdata if available
-#         arg_names = ["x", "y", "z", "roll", "pitch", "yaw"]
-#         for i in range(len(arg_names)):
-#             if arg_names[i] in ud:
-#                 self.coords[i] = ud[arg_names[i]]
+        self.lateralDirection = 1 if lateralDirection == "right" else -1
 
-#         self.desired_pose = Pose()
-#         self.desired_pose.position = Point(
-#             x=self.coords[0], y=self.coords[1], z=self.coords[2]
-#         )
-#         quat = quaternion_from_euler(self.coords[3], self.coords[4], self.coords[5])
-#         orientation = Quaternion()
-#         orientation.x, orientation.y, orientation.z, orientation.w = (
-#             quat[0],
-#             quat[1],
-#             quat[2],
-#             quat[3],
-#         )
-#         self.desired_pose.orientation = orientation
+        self.prevBearing = self.cv_data["gate"]["bearing"]
+        self.prevLateral = self.cv_data["gate"]["lateral"]
+        self.prevDistance = self.cv_data["gate"]["distance"]
+        self.prevTime = time.time()
 
-#         # calls run
-#         return super().execute(ud)
+        self.setDepth = -1.0
+        self.tolerance = tolerance
 
-#     def run(self, ud):
-#         desiredPosition = self.desired_pose.position
-#         desiredOrientation = euler_from_quaternion(
-#             quat_to_list(self.desired_pose.orientation)
-#         )
-#         print(
-#             f"Moving to {tuple(pos_to_list(desiredPosition))} with orientation {desiredOrientation}."
-#         )
+    def stopped(self, currBearing, currLateral, currDistance):
+        currTime = time.time()
 
-#         # loop continues as long as conditional evaluates to false
-#         while not (
-#             self.state
-#             and utilities.stopped_at_pose(
-#                 self.state.pose.pose, self.get_desired_pose(), self.state.twist.twist
-#             )
-#         ):
-#             self.task_state.create_rate(15)
-#             rclpy.spin_once(self.task_state)
+        bearingPrime = (currBearing - self.prevBearing) / (currTime - self.prevTime)
+        lateralPrime = (currLateral - self.prevLateral) / (currTime - self.prevTime)
+        distancePrime = (currDistance - self.prevDistance) / (currTime - self.prevTime)
 
-#             if self.state is not None:
-#                 currPose = self.state.pose.pose
-#                 currPos = currPose.position
-#                 currAtt = euler_from_quaternion(quat_to_list(currPose.orientation))
-#                 print(
-#                     f"Current Position: {tuple(pos_to_list(currPos))}\tCurrent Attitude: {currAtt}"
-#                 )
-#                 print(
-#                     f"Desired Position: {tuple(pos_to_list(desiredPosition))}\tDesired Attitude: {desiredOrientation}"
-#                 )
+        self.prevBearing = currBearing
+        self.prevLateral = currLateral
+        self.prevDistance = currDistance
+        self.prevTime = currTime
 
-#             print(f"not yet")
-#             self.publish_desired_pose(self.get_desired_pose())
-#             time.sleep(0.5)
+        bearingStopped = (
+            math.fabs(currBearing - (math.pi / 2.0)) <= self.tolerance
+        ) and (math.fabs(bearingPrime) <= self.tolerance)
+        lateralStopped = (math.fabs(currLateral) <= self.tolerance) and (
+            math.fabs(lateralPrime) <= self.tolerance
+        )
+        distanceStopped = (math.fabs(currDistance) <= self.tolerance) and (
+            math.fabs(distancePrime) <= self.tolerance
+        )
 
-#         print("i have arrived")
-#         return "done"
+        return (
+            (not self.bearingControl or bearingStopped)
+            and (not self.lateralControl or lateralStopped)
+            and (not self.distanceControl or distanceStopped)
+        )
 
-#     def get_desired_pose(self) -> Pose:
-#         return self.desired_pose
+    def execute(self, ud):
+        return super().execute(ud)
 
+    def run(self, ud):
+        # BEARING | target is bearing; current is pi/2
+        # LATERAL | setpoint is 0; current is lateral
+        # DISTANCE | setpoint is distance, current is 0
+        while True:
+            rclpy.spin_once(self.task_state)
 
-# class MoveToPoseLocalTask(MoveToPoseGlobalTask):
-#     # Move to pose given in local coordinates
-#     def __init__(self, x, y, z, roll, pitch, yaw):
-#         super().__init__(x, y, z, roll, pitch, yaw)
+            while self.state is None:
+                rclpy.spin_once(self.task_state)
 
-#     def run(self, ud):
-#         # Transform the desired pose from base_link frame to odom frame
-#         # aka convert to global
-#         self.desired_pose = utilities.transform("base_link", "odom", self.desired_pose)
+            self.targetRPY = [0.0, 0.0, 0.0]
+            self.targetXYZ = [0.0, 0.0, self.setDepth]
+            self.currRPY = [self.state.angular_position.y, 0.0, 0.0]
+            self.currXYZ = [0.0, 0.0, self.depth]
 
-#         return super().run(ud)
+            if self.bearingControl:
+                self.targetRPY[2] = self.cv_data["gate"]["bearing"]
+                self.currRPY[2] = math.pi / 2.0
 
+            if self.lateralControl:
+                self.targetXYZ[0] = 0.0
+                self.currXYZ[0] = (
+                    self.lateralDirection * self.cv_data["gate"]["lateral"]
+                )
 
-# class AllocateVelocityLocalTask(Task):
-#     def __init__(self, x, y, z, roll, pitch, yaw):
-#         super().__init__(task_name="allocate_local_velocity", outcomes=["done"])
-#         linear = Vector3(x=x, y=y, z=z)
-#         angular = Vector3(x=roll, y=pitch, z=yaw)
-#         self.desired_twist = Twist(linear=linear, angular=angular)
+            if self.distanceControl:
+                self.targetXYZ[1] = self.cv_data["gate"]["distance"]
+                self.currXYZ[1] = 0.0
 
-#     def run(self, ud):
-#         self.publish_desired_twist(self.desired_twist)
-#         return "done"
+            if not self.stopped(
+                self.cv_data["gate"]["bearing"],
+                self.cv_data["gate"]["lateral"],
+                self.cv_data["gate"]["distance"],
+            ):
+                corr = Correction()
 
+                corr.targetRPY.data = self.targetRPY
+                corr.targetXYZ.data = self.targetXYZ
+                corr.currRPY.data = self.currRPY
+                corr.currXYZ.data = self.currXYZ
 
-# class AllocateVelocityGlobalTask(AllocateVelocityLocalTask):
-#     # Given global velocity, we first convert into local velocity
-#     def __init__(self, x, y, z, roll, pitch, yaw):
-#         super().__init__(x, y, z, roll, pitch, yaw)
-#         odom_global = Odometry()
-#         odom_global.twist.twist = self.desired_twist
-#         odom_local = utilities.transform("odom", "base_link", odom_global)
-#         self.desired_twist = odom_local.twist.twist
+                self.publish_correction(corr)
+            else:
+                print(
+                    "COMPLETED MOVEMENT TO GATE",
+                    "\n\n=========\n",
+                )
+                return "done"

@@ -10,7 +10,10 @@
   <exec_depend>controls_core</exec_depend>
   <exec_depend>simulation</exec_depend>
   <exec_depend>tasks</exec_depend>
+  <exec_depend>custom_msgs</exec_depend>
+  <exec_depend>control_signals</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>camera</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <export>
