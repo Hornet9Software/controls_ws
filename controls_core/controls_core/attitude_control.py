@@ -1,6 +1,6 @@
 import numpy as np
 
-from controls_core.params import IMU_ZERO, UPTHRUST
+from controls_core.params import IMU_ZERO
 
 
 class AttitudeControl:
@@ -66,17 +66,17 @@ class AttitudeControl:
 
         return self.boundAngle(currAngle - targetAngle)
 
-    def getAttitudeCorrection(self, currAttRPY, targetAttRPY):
+    def getAttitudeCorrection(self, currRPY, targetRPY):
         """
-        currAttRPY is before correcting for IMU zero. It is the
+        currRPY is before correcting for IMU zero. It is the
         raw IMU roll, pitch and yaw.
 
-        targetAttRPY is after correcting for IMU zero. It is the
+        targetRPY is after correcting for IMU zero. It is the
         roll, pitch and yaw value relative to the zero.
         """
 
-        currRoll, _, currYaw = self.correctIMU(currAttRPY)
-        targetRoll, _, targetYaw = targetAttRPY
+        currRoll, _, currYaw = self.correctIMU(currRPY)
+        targetRoll, _, targetYaw = targetRPY
 
         print("Curr Yaw", currYaw)
         print("Target Yaw", targetYaw)

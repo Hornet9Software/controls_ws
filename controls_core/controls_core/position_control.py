@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import numpy as np
 
 
@@ -9,29 +7,20 @@ class PositionControl:
         self.lateralPID = lateralPID
         self.depthPID = depthPID
 
-    def getPositonCorrection(
-        self,
-        currDistance,
-        desiredDistance,
-        currLateral,
-        desiredLateral,
-        currDepth,
-        desiredDepth,
-    ):
-        print("Current Distance Deviation", currDistance - desiredDistance)
-        print("Current Lateral Deviation", currLateral - desiredLateral)
-        print("Current Depth Deviation", currDepth - desiredDepth)
+    def getPositionCorrection(self, currXYZ, targetXYZ):
+        currLateral, currDistance, currDepth = currXYZ
+        targetLateral, targetDistance, targetDepth = targetXYZ
 
         yAcc = self.distancePID.compute(
-            setpoint=desiredDistance,
+            setpoint=targetDistance,
             process_variable=currDistance,
         )
 
         xAcc = self.lateralPID.compute(
-            setpoint=desiredLateral, process_variable=currLateral
+            setpoint=targetLateral, process_variable=currLateral
         )
 
-        zAcc = self.depthPID.compute(setpoint=desiredDepth, process_variable=currDepth)
+        zAcc = self.depthPID.compute(setpoint=targetDepth, process_variable=currDepth)
 
         linAcc = [xAcc, yAcc, zAcc]
 

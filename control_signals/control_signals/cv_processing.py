@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import rclpy
 import math
 import numpy as np
@@ -7,28 +5,36 @@ from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
 
 
-class CVToControlsSignals(Node):
-    def __init__(self, objects=[]):
-        super().__init__("cv_to_controls_signals_processor")
-        self.objects = objects
+class CVControlSignals(Node):
+    OBJECTS = ["gate"]
+    OBJECT_DIMENSIONS = {"gate": (1.5, 1.0)}
+
+    def __init__(self):
+        super().__init__("cv_control_signals_processor")
         self.objectPublishers = {}
         self.listeners = {}
 
+        """
+        TODO Change to dynamically read parameters from yaml file.
+        Should read the following details:
+        - Image size
+        - Camera matrix
+        -
+        """
         self.IMAGE_WIDTH_PIXELS = 1.0
         self.IMAGE_HEIGHT_PIXELS = 1.0
         self.IMAGE_CENTROID = (
             self.IMAGE_WIDTH_PIXELS / 2.0,
             self.IMAGE_HEIGHT_PIXELS / 2.0,
         )
-        self.OBJECT_DIMENSIONS = {"gate": (1.5, 1.0)}
         self.HFOV = math.radians(50.7)
         self.VFOV = math.radians(37.7)
 
-        for objectName in objects:
+        for objectName in self.OBJECTS:
             self.listeners[objectName] = self.create_subscription(
                 Float32MultiArray,
                 "/object/" + objectName + "/yolo",
-                lambda msg: self.bbox_callback(objectName, msg),
+                lambda msg: self._onReceiveYOLO(objectName, msg),
                 10,
             )
             self.objectPublishers[objectName] = {}
@@ -38,7 +44,7 @@ class CVToControlsSignals(Node):
                     Float32, topic, 10
                 )
 
-    def bbox_callback(self, objectName, msg):
+    def _onReceiveYOLO(self, objectName, msg):
         objectWidth = self.OBJECT_DIMENSIONS[objectName][0]
         objectHeight = self.OBJECT_DIMENSIONS[objectName][1]
 
@@ -87,10 +93,13 @@ class CVToControlsSignals(Node):
             deltaX *= -1
 
         bearing = math.atan2(deltaX, D)
-        print("BEARING: ", bearing)
 
         if objectOnLeft:
             bearing += math.pi / 2.0
+        else:
+            bearing = (math.pi / 2) - bearing
+
+        print("BEARING: ", bearing)
 
         distance = math.hypot(D, deltaX)
 
@@ -110,7 +119,7 @@ class CVToControlsSignals(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    cvProcessor = CVToControlsSignals(objects=["gate"])
+    cvProcessor = CVControlSignals()
 
     try:
         rclpy.spin(cvProcessor)

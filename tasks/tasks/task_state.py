@@ -1,41 +1,35 @@
-# from custom_msgs.msg import CVObject
 from std_msgs.msg import Float32
-from geometry_msgs.msg import Pose, Twist
-from nav_msgs.msg import Odometry
 from imu_msg.msg import Imu
+from custom_msgs.msg import State, Correction
 from rclpy.node import Node
 
 
-# Note: Because these are rclpy Nodes, for them to be 'alive' and usable, after creating them, we still have to spin_once/spin
 class TaskState(Node):
-    STATE_TOPIC = "/sensors/imu"
-    DESIRED_POSE_TOPIC = "/controls/desired_pose"
-    DESIRED_TWIST_VELOCITY_TOPIC = "/controls/desired_twist"
-    CV_TOPICS = ["gate"]
-    DEPTH_TOPIC = "/sensors/depth"
+    STATE_TOPIC = (
+        "/sensors/imu/processed"  # once sensor fusion is up, this should be "/state".
+    )
+    CORRECTION_TOPIC = "/controls/correction"
+    CV_OBJECTS = ["gate"]
+    DEPTH_TOPIC = "/sensors/depth"  # no need for this once sensor fusion is up
 
     def __init__(self, task_name: str):
         super().__init__(f"{task_name}_node")
         self.state_listener = self.create_subscription(
-            Imu, self.STATE_TOPIC, self._on_receive_state, 10
+            State, self.STATE_TOPIC, self._on_receive_state, 10
         )
 
         self.depth_listener = self.create_subscription(
             Float32, self.DEPTH_TOPIC, self._on_receive_depth, 10
         )
 
-        self.desired_pose_publisher = self.create_publisher(
-            Pose, self.DESIRED_POSE_TOPIC, 10
-        )
-
-        self.desired_twist_velocity_publisher = self.create_publisher(
-            Twist, self.DESIRED_TWIST_VELOCITY_TOPIC, 10
+        self.correction_publisher = self.create_publisher(
+            Correction, self.CORRECTION_TOPIC, 10
         )
 
         self.depth = None
-        self.state = {"roll": None, "pitch": None, "yaw": None}
+        self.state = None
         self.cv_data = {}
-        for objectName in self.CV_TOPICS:
+        for objectName in self.CV_OBJECTS:
             self.cv_data[objectName] = {}
             for signal in ["bearing", "lateral", "distance"]:
                 topic = "/object/" + objectName + "/" + signal
@@ -47,12 +41,8 @@ class TaskState(Node):
                     10,
                 )
 
-    def _on_receive_state(self, msg: Imu):
-        self.state = {
-            "roll": msg.roll_pitch_yaw.x,
-            "pitch": msg.roll_pitch_yaw.y,
-            "yaw": msg.roll_pitch_yaw.z,
-        }
+    def _on_receive_state(self, msg):
+        self.state = msg
 
     def _on_receive_depth(self, msg):
         self.depth = msg.data

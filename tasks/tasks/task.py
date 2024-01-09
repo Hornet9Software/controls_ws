@@ -4,10 +4,7 @@ from abc import abstractmethod
 # A state machine consists of states, state transitions and associated actions
 import smach
 from dependency_injector import providers
-from geometry_msgs.msg import Pose, Twist
-from nav_msgs.msg import Odometry
 from tasks.task_state import TaskState
-from cmath import nan
 
 # providers is used to create instances of a class/object
 
@@ -32,7 +29,7 @@ class Task(smach.State):
         return self.task_state.state
 
     @property
-    def cv_data(self) -> dict:
+    def cv_data(self):
         return self.task_state.cv_data
 
     @property
@@ -49,64 +46,60 @@ class Task(smach.State):
         self.initial_state = self.state
         return self.run(ud)
 
-    # Invokes task_state's properties to publish stuff
-    def publish_desired_pose(self, pose: Pose):
-        self.task_state.desired_pose_publisher.publish(pose)
-
-    def publish_desired_twist(self, twist: Twist):
-        self.task_state.desired_twist_velocity_publisher.publish(twist)
+    def publish_correction(self, correction):
+        self.task_state.correction_publisher.publish(correction)
 
 
-class ObjectVisibleTask(Task):
-    def __init__(self, image_name, timeout):
-        super().__init__(
-            task_name=image_name,
-            outcomes=["undetected", "detected"],
-            input_keys=["image_name"],
-            output_keys=["image_name"],
-        )
+# class ObjectVisibleTask(Task):
+#     def __init__(self, image_name, timeout):
+#         super().__init__(
+#             task_name=image_name,
+#             outcomes=["undetected", "detected"],
+#             input_keys=["image_name"],
+#             output_keys=["image_name"],
+#         )
 
-        self.image_name = image_name
-        self.timeout = timeout
+#         self.image_name = image_name
+#         self.timeout = timeout
 
-    def run(self, ud):
-        milli_secs = 10
-        rate = self.task_state.create_rate(milli_secs)
-        total = 0
-        while total < self.timeout * 1000:
-            if cv_object_position(self.cv_data[self.image_name]) is not None:
-                return "detected"
+#     def run(self, ud):
+#         milli_secs = 10
+#         rate = self.task_state.create_rate(milli_secs)
+#         total = 0
+#         while total < self.timeout * 1000:
+#             if cv_object_position(self.cv_data[self.image_name]) is not None:
+#                 return "detected"
 
-            total += milli_secs
-            rate.sleep()
-        return "undetected"
-
-
-class MutableTask(Task):
-    def __init__(self, mutablePose):
-        super().__init__(
-            task_name="mutable_task",
-            outcomes=["done"],
-            input_keys=["x", "y", "z", "roll", "pitch", "yaw"],
-        )
-        # super().__init__(task_name=name, outcomes=['done'], input_keys=['x','y','z','roll','pitch','yaw'])
-        self.mutablePose = mutablePose
-
-    def run(self, ud):
-        if ud.x != nan and ud.y != nan and ud.z != nan:
-            self.mutablePose.setPoseCoords(ud.x, ud.y, ud.z, ud.roll, ud.pitch, ud.yaw)
-
-        # Checks if preemption request has been made for current state
-        # Preemption refers to interuppting execution of current state in favor of another
-        if self.preempt_requested():
-            # Perform cleanup and transition to another state
-            self.service_preempt()
-
-        return "done"
+#             total += milli_secs
+#             rate.sleep()
+#         return "undetected"
 
 
-def cv_object_position(cv_obj_data):
-    pass
+# class MutableTask(Task):
+#     def __init__(self, mutablePose):
+#         super().__init__(
+#             task_name="mutable_task",
+#             outcomes=["done"],
+#             input_keys=["x", "y", "z", "roll", "pitch", "yaw"],
+#         )
+#         # super().__init__(task_name=name, outcomes=['done'], input_keys=['x','y','z','roll','pitch','yaw'])
+#         self.mutablePose = mutablePose
+
+#     def run(self, ud):
+#         if ud.x != nan and ud.y != nan and ud.z != nan:
+#             self.mutablePose.setPoseCoords(ud.x, ud.y, ud.z, ud.roll, ud.pitch, ud.yaw)
+
+#         # Checks if preemption request has been made for current state
+#         # Preemption refers to interuppting execution of current state in favor of another
+#         if self.preempt_requested():
+#             # Perform cleanup and transition to another state
+#             self.service_preempt()
+
+#         return "done"
+
+
+# def cv_object_position(cv_obj_data):
+#     pass
 
 
 """

@@ -264,11 +264,25 @@ class LateralShiftToObject(Task):
 
 
 class AlignToObject(Task):
-    def __init__(self, objectName, bearingTolerance, lateralTolerance):
+    def __init__(
+        self,
+        objectName,
+        rotate=True,
+        lateral=True,
+        bearingTolerance=0.05,
+        lateralTolerance=0.05,
+    ):
         super().__init__(task_name="align_to_object", outcomes=["done"])
         self.objectName = objectName
+        self.rotate = rotate
+        self.lateral = lateral
+
         self.bearingTolerance = bearingTolerance
         self.lateralTolerance = lateralTolerance
+
+        self.prevTime = time.time()
+        self.prevBearing = 0.0
+        self.prevLateral = 0.0
 
     def execute(self, ud):
         self.thrusterControl = ThrusterControl()
@@ -285,7 +299,9 @@ class AlignToObject(Task):
 
         return super().execute(ud)
 
-    def stopped_at_bearing(self, currentBearing):
+    def stopped(self, currentBearing, currentLateral):
+        if self.rotate:
+            pass
         return math.fabs(currentBearing) <= self.bearingTolerance
 
     def stopped_at_position(self, currentLateral):
