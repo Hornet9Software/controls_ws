@@ -9,9 +9,9 @@ from launch.actions import (
     IncludeLaunchDescription,
     include_launch_description,
 )
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 # This function is always needed
@@ -45,6 +45,7 @@ def generate_launch_description():
     # foxglove_studio = ExecuteProcess(cmd=["foxglove-studio"])
 
     # Add the nodes and the process to the LaunchDescription list
-    ld = [camera_launch, cv_signals, imu_signals, pid_manager, movement_test]
+    # ld = [camera_launch, cv_signals, imu_signals, pid_manager, movement_test]
+    ld = [imu_signals, pid_manager, movement_test]
 
     return LaunchDescription(ld)
