@@ -16,7 +16,7 @@ def main():
     with sm:
         smach.StateMachine.add(
             "DIVE_TO_DEPTH",
-            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=0.0),
+            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
             # transitions={"done": "ROTATE_TO_YAW"},
             transitions={"done": "finish"},
             # transitions={"done": "MOVE_STRAIGHT"},
