@@ -38,6 +38,8 @@ class DiveToDepth(Task):
 
         if not setYaw:
             self.setYaw = self.state.angular_position.z
+        else:
+            self.setYaw = setYaw
 
         self.targetRPY = [self.setRoll, 0.0, self.setYaw]
         self.targetXYZ = [0.0, 0.0, self.targetDepth]
@@ -110,6 +112,8 @@ class RotateToYaw(Task):
 
         if not setDepth:
             self.setDepth = self.depth
+        else:
+            self.setDepth = setDepth
 
         self.targetRPY = [self.setRoll, 0.0, self.targetYaw]
         self.targetXYZ = [0.0, 0.0, self.setDepth]
@@ -181,11 +185,15 @@ class MoveStraightForTime(Task):
 
         if not setDepth:
             self.setDepth = self.depth
+        else:
+            self.setDepth = setDepth
 
         self.setRoll = 0.0
 
         if not setYaw:
             self.setYaw = self.state.angular_position.z
+        else:
+            self.setYaw = setYaw
 
         self.targetRPY = [self.setRoll, 0.0, self.setYaw]
         self.targetXYZ = [0.0, 1.0, self.setDepth]
@@ -219,10 +227,10 @@ class MoveStraightForTime(Task):
 
                 corr = Correction()
 
-                corr.target_rpy.data = self.targetRPY
-                corr.target_xyz.data = self.targetXYZ
-                corr.curr_rpy.data = self.currRPY
-                corr.curr_xyz.data = self.currXYZ
+                corr.targetRPY.data = self.targetRPY
+                corr.targetXYZ.data = self.targetXYZ
+                corr.currRPY.data = self.currRPY
+                corr.currXYZ.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:
