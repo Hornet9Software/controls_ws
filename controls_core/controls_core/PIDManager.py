@@ -1,4 +1,5 @@
 import rclpy
+import numpy as np
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import *
 from controls_core.position_control import PositionControl
@@ -27,10 +28,10 @@ class PIDManager(Node):
         )
 
     def _onReceiveCorrection(self, msg):
-        currRPY = msg.curr_rpy.data
-        targetRPY = msg.target_rpy.data
-        currXYZ = msg.curr_rpy.data
-        targetXYZ = msg.target_rpy.data
+        currRPY = np.array(msg.curr_rpy.data).tolist()
+        targetRPY = np.array(msg.target_rpy.data).tolist()
+        currXYZ = np.array(msg.curr_rpy.data).tolist()
+        targetXYZ = np.array(msg.target_rpy.data).tolist()
 
         angularAcc = self.attitudeControl.getAttitudeCorrection(
             currRPY=currRPY, targetRPY=targetRPY
