@@ -86,10 +86,10 @@ class DiveToDepth(Task):
 
                 corr = Correction()
 
-                corr.targetRPY.data = self.targetRPY
-                corr.targetXYZ.data = self.targetXYZ
-                corr.currRPY.data = self.currRPY
-                corr.currXYZ.data = self.currXYZ
+                corr.target_rpy.data = self.targetRPY
+                corr.target_xyz.data = self.targetXYZ
+                corr.curr_rpy.data = self.currRPY
+                corr.curr_xyz.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:
@@ -155,10 +155,10 @@ class RotateToYaw(Task):
 
                 corr = Correction()
 
-                corr.targetRPY.data = self.targetRPY
-                corr.targetXYZ.data = self.targetXYZ
-                corr.currRPY.data = self.currRPY
-                corr.currXYZ.data = self.currXYZ
+                corr.target_rpy.data = self.targetRPY
+                corr.target_xyz.data = self.targetXYZ
+                corr.curr_rpy.data = self.currRPY
+                corr.curr_xyz.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:
@@ -219,10 +219,10 @@ class MoveStraightForTime(Task):
 
                 corr = Correction()
 
-                corr.targetRPY.data = self.targetRPY
-                corr.targetXYZ.data = self.targetXYZ
-                corr.currRPY.data = self.currRPY
-                corr.currXYZ.data = self.currXYZ
+                corr.target_rpy.data = self.targetRPY
+                corr.target_xyz.data = self.targetXYZ
+                corr.curr_rpy.data = self.currRPY
+                corr.curr_xyz.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:
@@ -331,10 +331,10 @@ class MoveToGate(Task):
             ):
                 corr = Correction()
 
-                corr.targetRPY.data = self.targetRPY
-                corr.targetXYZ.data = self.targetXYZ
-                corr.currRPY.data = self.currRPY
-                corr.currXYZ.data = self.currXYZ
+                corr.target_rpy.data = self.targetRPY
+                corr.target_xyz.data = self.targetXYZ
+                corr.curr_rpy.data = self.currRPY
+                corr.curr_xyz.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:

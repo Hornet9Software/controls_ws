@@ -31,10 +31,10 @@ class PIDManager(Node):
         )
 
     def _onReceiveCorrection(self, msg):
-        currRPY = msg.currRPY.data
-        targetRPY = msg.targetRPY.data
-        currXYZ = msg.currXYZ.data
-        targetXYZ = msg.targetXYZ.data
+        currRPY = msg.curr_rpy.data
+        targetRPY = msg.target_rpy.data
+        currXYZ = msg.curr_rpy.data
+        targetXYZ = msg.target_rpy.data
 
         angularAcc = self.attitudeControl.getAttitudeCorrection(
             currRPY=currRPY, targetRPY=targetRPY
