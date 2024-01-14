@@ -26,7 +26,7 @@ class AttitudeControlTestPublisher(Node):
         currAttRPY = [msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z]
 
         angular_acc = attitudeControl.getAttitudeCorrection(
-            currAttRPY=currAttRPY, targetAttRPY=targetAttRPY
+            currRPY=currAttRPY, targetRPY=targetAttRPY
         )
         self.get_logger().info(f"PID angular acceleration: {angular_acc}")
         # FL-FR-ML-MR-RL-RR
