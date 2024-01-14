@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
+import math
 
 import rclpy
 import smach
-from simulation.movement_tasks_sim import *
-from simulation.thrusters_sim import *
+from tasks.movement_tasks import *
 
 
 def main():
@@ -13,18 +12,27 @@ def main():
 
     with sm:
         smach.StateMachine.add(
-            "Depth PID Tuning",
-            DiveToDepth(desiredDepth=-1.5, tolerance=0.05),
+            "DIVE_TO_DEPTH",
+            DiveToDepth(targetDepth=1.0, tolerance=0.05, setYaw=1.57),
+            # transitions={"done": "ROTATE_TO_YAW"},
             transitions={"done": "finish"},
+            # transitions={"done": "MOVE_STRAIGHT"},
         )
+        # smach.StateMachine.add(
+        #     "ROTATE_TO_YAW",
+        #     RotateToYaw(desiredYaw=math.radians(90.0), tolerance=0.1),
+        #     transitions={"done": "MOVE_STRAIGHT"},
+        # )
+        # smach.StateMachine.add(
+        #     "MOVE_STRAIGHT",
+        #     MoveLinearlyForTime(timeToMove=30.0, yAcc=1.0, desiredDepth=-1.0),
+        #     transitions={"done": "finish"},
+        # )
 
     try:
         sm.execute()
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        thrusterControl = ThrusterControl()
-        thrusterControl.killThrusters()
-
-    rclpy.try_shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

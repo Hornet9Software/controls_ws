@@ -72,7 +72,7 @@ class DiveToDepth(Task):
         while True:
             rclpy.spin_once(self.task_state)
 
-            while self.state is None:
+            while (self.state is None) or (self.depth is None):
                 rclpy.spin_once(self.task_state)
 
             self.currRPY = [

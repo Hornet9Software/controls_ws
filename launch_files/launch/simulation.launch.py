@@ -20,32 +20,24 @@ def generate_launch_description():
         )
     )
 
-    # dummy_data = Node(package="simulation", executable="dummy_data")
+    dummy_data = Node(package="simulation", executable="dummy_data")
 
-    control_signals = Node(package="controls_core", executable="control_signals")
+    # cv_signals = Node(package="control_signals", executable="cv_signals")
 
-    simulation = Node(package="simulation", executable="simulation")
+    imu_signals = Node(package="control_signals", executable="imu_signals")
+
+    pid_manager = Node(package="simulation", executable="pid_manager_sim")
+
+    # simulation = Node(package="simulation", executable="simulation")
 
     movement_test = Node(package="simulation", executable="movement_test_sim")
-
-    # robot_node = Node(
-    #     namespace="core",
-    #     package="params_pkg",
-    #     executable="robot_node",
-    #     parameters=[
-    #         {
-    #             "robot_name": "RobotA",
-    #             "max_speed": 4.2,
-    #             "waypoints": ["Home", "Room 1", "Corridor", "Home"],
-    #         }
-    #     ],
-    # )
 
     # Launch Foxglove Studio to monitor data
     # foxglove_studio = ExecuteProcess(cmd=["foxglove-studio"])
 
     # Add the nodes and the process to the LaunchDescription list
-    ld = [foxglove_bridge, control_signals, simulation, movement_test]
+    # ld = [camera_launch, cv_signals, imu_signals, pid_manager, movement_test]
+    ld = [foxglove_bridge, dummy_data, imu_signals, pid_manager, movement_test]
     # foxglove_studio]
 
     return LaunchDescription(ld)

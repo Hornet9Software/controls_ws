@@ -21,6 +21,7 @@ setup(
         "console_scripts": [
             "dummy_data = simulation.dummy_data:main",
             "movement_test_sim = simulation.movement_test_sim:main",
+            "pid_manager_sim = simulation.pid_manager_sim:main",
             "simulation = simulation.simulation:main",
         ],
     },
