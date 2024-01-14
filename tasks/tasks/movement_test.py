@@ -16,14 +16,14 @@ def main():
     with sm:
         smach.StateMachine.add(
             "DIVE_TO_DEPTH",
-            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
+            DiveToDepth(targetDepth=-0.15, tolerance=0.05, setYaw=1.57),
             # transitions={"done": "ROTATE_TO_YAW"},
             transitions={"done": "finish"},
             # transitions={"done": "MOVE_STRAIGHT"},
         )
         # smach.StateMachine.add(
         #     "ROTATE_TO_YAW",
-        #     RotateToYaw(desiredYaw=math.radians(90.0), tolerance=0.1),
+        #     RotateToYaw(targetYaw=math.radians(90.0), tolerance=0.1),
         #     transitions={"done": "MOVE_STRAIGHT"},
         # )
         # smach.StateMachine.add(
