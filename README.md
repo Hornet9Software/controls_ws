@@ -23,6 +23,7 @@ source install/setup.bash
 ros2 launch launch_files base.launch.py
 ```
 **Note: To reset IMU drift, relaunch `base.launch.py`**
+
 6. Launch movement test.
 ```
 ros2 launch launch_files movement.launch.py
