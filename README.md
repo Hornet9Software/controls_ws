@@ -18,12 +18,10 @@ source install/setup.bash
 ```
 2. Modify `/tasks/movement_test.py` as needed to configure state machine and associated movement tasks.
 3. Launch cameras, sensors, etc.
-4. Launch base nodes needed for initialising controls stack.
+4. Launch base nodes needed for initialising controls stack. **Note: To reset IMU drift, relaunch `base.launch.py`**
 ```
 ros2 launch launch_files base.launch.py
 ```
-   **Note: To reset IMU drift, relaunch `base.launch.py`**
-
 6. Launch movement test.
 ```
 ros2 launch launch_files movement.launch.py
