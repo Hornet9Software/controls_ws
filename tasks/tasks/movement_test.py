@@ -29,7 +29,16 @@ def main():
         #     transitions={"done": "MOVE_TO_GATE"},
         # )
         # smach.StateMachine.add(
-        #     "MOVE_TO_GATE", MoveToGate(), transitions={"done": "finish"}
+        #     "MOVE_TO_GATE",
+        #     MoveToGate(
+        #         tolerance=0.05,
+        #         bearingControl=True,
+        #         lateralControl=False,
+        #         lateralDirection="right",
+        #         distanceControl=False,
+        #         setDepth=-1.0,
+        #     ),
+        #     transitions={"done": "finish"},
         # )
 
     try:

@@ -322,7 +322,6 @@ class MoveToGate(Task):
                 or (self.depth is None)
                 or (self.cv_data["gate"] is None)
             ):
-                self.logger.info("hello2")
                 rclpy.spin_once(self.task_state)
 
             # self.logger.info("hello123")
