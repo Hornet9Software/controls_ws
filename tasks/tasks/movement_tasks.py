@@ -2,6 +2,7 @@ import math
 import threading
 import time
 import rclpy
+import smach
 import controls_core.utilities as utilities
 
 from controls_core.params import *
@@ -60,7 +61,7 @@ class DiveToDepth(Task):
         )
 
     def execute(self, ud):
-        print("INITIALISING DIVE TO DEPTH", self.targetDepth)
+        self.logger.info("INITIALISING DIVE TO DEPTH {}".format(self.targetDepth))
         print()
         # threading.Thread(
         #     target=PIDTuner, args=[self.positionControl.distancePID], daemon=True
@@ -84,7 +85,7 @@ class DiveToDepth(Task):
             self.currXYZ = [0.0, 0.0, self.depth]
 
             if not self.stopped_at_position(self.currXYZ[2]):
-                print("CURRENT DEPTH", self.depth)
+                self.logger.info("CURRENT DEPTH: {}".format(self.depth))
 
                 corr = Correction()
 
@@ -95,12 +96,12 @@ class DiveToDepth(Task):
 
                 self.publish_correction(corr)
             else:
-                print("COMPLETED DIVE TO DEPTH", self.targetDepth, "\n\n=========\n")
+                self.logger.info("COMPLETED DIVE TO DEPTH {}".format(self.targetDepth))
                 return "done"
 
 
 class RotateToYaw(Task):
-    def __init__(self, targetYaw, tolerance=0.1, setDepth=None):
+    def __init__(self, targetYaw, tolerance=0.02, setDepth=None):
         super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
 
         self.task_state.create_rate(100)
@@ -143,7 +144,7 @@ class RotateToYaw(Task):
         while True:
             rclpy.spin_once(self.task_state)
 
-            while self.state is None:
+            while (self.state is None) or (self.depth is None):
                 rclpy.spin_once(self.task_state)
 
             self.currRPY = [
@@ -199,8 +200,9 @@ class MoveStraightForTime(Task):
         self.targetXYZ = [0.0, 1.0, self.setDepth]
 
     def execute(self, ud):
-        print("INITIALISING FORWARD MOVEMENT FOR", self.timeToMove, "SECONDS")
-        print()
+        self.logger.info(
+            "INITIALISING FORWARD MOVEMENT FOR " + str(self.timeToMove) + " SECONDS"
+        )
 
         return super().execute(ud)
 
@@ -210,7 +212,7 @@ class MoveStraightForTime(Task):
         while True:
             rclpy.spin_once(self.task_state)
 
-            while self.state is None:
+            while (self.state is None) or (self.depth is None):
                 rclpy.spin_once(self.task_state)
 
             self.currRPY = [
@@ -223,22 +225,25 @@ class MoveStraightForTime(Task):
             currTime = time.time()
 
             if (currTime - startingTime) < self.timeToMove:
-                print("THRUSTING FOR", currTime - startingTime, "MORE SECONDS")
+                self.logger.info(
+                    "THRUSTING FOR "
+                    + str(self.timeToMove - (currTime - startingTime))
+                    + " MORE SECONDS"
+                )
 
                 corr = Correction()
 
-                corr.targetRPY.data = self.targetRPY
-                corr.targetXYZ.data = self.targetXYZ
-                corr.currRPY.data = self.currRPY
-                corr.currXYZ.data = self.currXYZ
+                corr.target_rpy.data = self.targetRPY
+                corr.target_xyz.data = self.targetXYZ
+                corr.curr_rpy.data = self.currRPY
+                corr.curr_xyz.data = self.currXYZ
 
                 self.publish_correction(corr)
             else:
-                print(
-                    "COMPLETED FORWARD MOVEMENT FOR",
-                    self.timeToMove,
-                    "SECONDS",
-                    "\n\n=========\n",
+                self.logger.info(
+                    "COMPLETED FORWARD MOVEMENT FOR "
+                    + str(self.timeToMove)
+                    + " SECONDS"
                 )
                 return "done"
 
@@ -264,9 +269,9 @@ class MoveToGate(Task):
 
         self.lateralDirection = 1 if lateralDirection == "right" else -1
 
-        self.prevBearing = self.cv_data["gate"]["bearing"]
-        self.prevLateral = self.cv_data["gate"]["lateral"]
-        self.prevDistance = self.cv_data["gate"]["distance"]
+        self.prevBearing = 0.0
+        self.prevLateral = 0.0
+        self.prevDistance = 0.0
         self.prevTime = time.time()
 
         self.setDepth = -1.0
@@ -301,6 +306,7 @@ class MoveToGate(Task):
         )
 
     def execute(self, ud):
+        self.logger.info("INITIALISING MOVEMENT TO GATE")
         return super().execute(ud)
 
     def run(self, ud):
@@ -310,9 +316,16 @@ class MoveToGate(Task):
         while True:
             rclpy.spin_once(self.task_state)
 
-            while self.state is None:
+            # self.logger.info("hello1")
+            while (
+                (self.state is None)
+                or (self.depth is None)
+                or (self.cv_data["gate"] is None)
+            ):
+                self.logger.info("hello2")
                 rclpy.spin_once(self.task_state)
 
+            # self.logger.info("hello123")
             self.targetRPY = [0.0, 0.0, 0.0]
             self.targetXYZ = [0.0, 0.0, self.setDepth]
             self.currRPY = [self.state.angular_position.y, 0.0, 0.0]
@@ -346,8 +359,5 @@ class MoveToGate(Task):
 
                 self.publish_correction(corr)
             else:
-                print(
-                    "COMPLETED MOVEMENT TO GATE",
-                    "\n\n=========\n",
-                )
+                self.logger.info("COMPLETED MOVEMENT TO GATE")
                 return "done"

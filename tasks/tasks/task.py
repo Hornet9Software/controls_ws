@@ -36,6 +36,10 @@ class Task(smach.State):
     def depth(self):
         return self.task_state.depth
 
+    @property
+    def logger(self):
+        return self.task_state.get_logger()
+
     @abstractmethod
     def run(self, ud):
         # To be overwritten by a subclass

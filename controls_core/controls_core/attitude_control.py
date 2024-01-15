@@ -96,7 +96,7 @@ class AttitudeControl:
                 currAngle=currYaw, targetAngle=targetYaw
             ),
         )
-        angular_acc = [rollAcc, 0, yawAcc]
+        angular_acc = [0.0, rollAcc, yawAcc]
 
         return angular_acc
 

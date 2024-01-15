@@ -37,12 +37,12 @@ class CVControlSignals(Node):
                 lambda msg: self._onReceiveYOLO(objectName, msg),
                 10,
             )
-            self.objectPublishers[objectName] = {}
-            for signal in ["bearing", "lateral", "distance"]:
-                topic = "/object/" + objectName + "/" + signal
-                self.objectPublishers[objectName][signal] = self.create_publisher(
-                    Float32, topic, 10
-                )
+
+            self.objectPublishers[objectName] = self.create_publisher(
+                Float32MultiArray,
+                "/object/" + objectName + "/bearing_lateral_distance",
+                10,
+            )
 
     def _onReceiveYOLO(self, objectName, msg):
         objectWidth = self.OBJECT_DIMENSIONS[objectName][0]
@@ -58,7 +58,9 @@ class CVControlSignals(Node):
         yMin = y_centre - h / 2.0
         yMax = y_centre + h / 2.0
 
-        print("XMIN XMAX YMIN YMAX: ", xMin, xMax, yMin, yMax)
+        self.get_logger().info(
+            "XMIN XMAX YMIN YMAX: {}, {}, {}, {}".format(xMin, xMax, yMin, yMax)
+        )
 
         objectWidthPixels = xMax - xMin
         objectHeightPixels = yMax - yMin
@@ -69,7 +71,7 @@ class CVControlSignals(Node):
 
         imageHeight = metrePerPixelVertical * self.IMAGE_HEIGHT_PIXELS
 
-        print("IMAGE HEIGHT: ", imageHeight)
+        self.get_logger().info("IMAGE HEIGHT: {}".format(imageHeight))
 
         # VARIABLES
         # D: perpendicular distance to plane of projection of gate
@@ -111,16 +113,14 @@ class CVControlSignals(Node):
 
         lateral = math.acos(min(projectedWidth, objectWidth) / objectWidth)
 
-        for signal in ["distance", "lateral", "bearing"]:
-            outMsg = Float32()
-            outMsg.data = eval(signal)
-            self.objectPublishers[objectName][signal].publish(outMsg)
+        outMsg = Float32MultiArray()
+        outMsg.data = [bearing, lateral, distance]
+        self.objectPublishers[objectName].publish(outMsg)
 
 
 def main(args=None):
     rclpy.init(args=args)
     cvProcessor = CVControlSignals()
-
     try:
         rclpy.spin(cvProcessor)
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):

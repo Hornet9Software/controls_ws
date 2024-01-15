@@ -22,7 +22,7 @@ def generate_launch_description():
 
     dummy_data = Node(package="simulation", executable="dummy_data")
 
-    # cv_signals = Node(package="control_signals", executable="cv_signals")
+    cv_signals = Node(package="control_signals", executable="cv_signals")
 
     imu_signals = Node(package="control_signals", executable="imu_signals")
 
@@ -36,8 +36,14 @@ def generate_launch_description():
     # foxglove_studio = ExecuteProcess(cmd=["foxglove-studio"])
 
     # Add the nodes and the process to the LaunchDescription list
-    # ld = [camera_launch, cv_signals, imu_signals, pid_manager, movement_test]
-    ld = [foxglove_bridge, dummy_data, imu_signals, pid_manager, movement_test]
+    ld = [
+        foxglove_bridge,
+        dummy_data,
+        cv_signals,
+        imu_signals,
+        pid_manager,
+        movement_test,
+    ]
     # foxglove_studio]
 
     return LaunchDescription(ld)

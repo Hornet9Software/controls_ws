@@ -1,4 +1,6 @@
-from std_msgs.msg import Float32
+import numpy as np
+
+from std_msgs.msg import Float32, Float32MultiArray
 from imu_msg.msg import Imu
 from custom_msgs.msg import State, Correction
 from rclpy.node import Node
@@ -28,18 +30,18 @@ class TaskState(Node):
 
         self.depth = None
         self.state = None
+
+        self.cv_listeners = {}
         self.cv_data = {}
         for objectName in self.CV_OBJECTS:
-            self.cv_data[objectName] = {}
-            for signal in ["bearing", "lateral", "distance"]:
-                topic = "/object/" + objectName + "/" + signal
-                self.cv_data[objectName][signal] = None
-                self.create_subscription(
-                    Float32,
-                    topic,
-                    lambda msg: self._on_receive_cv_data(msg, objectName, signal),
-                    10,
-                )
+            self.cv_data[objectName] = None
+            topic = "/object/" + objectName + "/bearing_lateral_distance"
+            self.cv_listeners[objectName] = self.create_subscription(
+                Float32MultiArray,
+                topic,
+                lambda msg: self._on_receive_cv_data(msg, objectName),
+                10,
+            )
 
     def _on_receive_state(self, msg):
         self.state = msg
@@ -47,5 +49,11 @@ class TaskState(Node):
     def _on_receive_depth(self, msg):
         self.depth = msg.data
 
-    def _on_receive_cv_data(self, msg, objectName, signal):
-        self.cv_data[objectName][signal] = msg.data
+    def _on_receive_cv_data(self, msg, objectName):
+        msgData = np.array(msg.data).tolist()
+        self.cv_data[objectName] = {}
+        self.cv_data[objectName]["bearing"] = msgData[0]
+        self.cv_data[objectName]["lateral"] = msgData[1]
+        self.cv_data[objectName]["distance"] = msgData[2]
+
+        self.get_logger().info(self.cv_data.__repr__())

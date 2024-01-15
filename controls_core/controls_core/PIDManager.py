@@ -41,8 +41,7 @@ class PIDManager(Node):
         )
 
         thrustValues = self.thrustAllocator.getThrustPWMs(linearAcc, angularAcc)
-        print("CORRECTNG WITH THRUST", thrustValues)
-        print("\n=========\n")
+        self.get_logger().info("CORRECTNG WITH THRUST: " + str(thrustValues))
         self.thrusterControl.setThrusters(thrustValues=thrustValues)
 
 

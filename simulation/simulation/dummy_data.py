@@ -102,8 +102,8 @@ class DummyData(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    # imuGen = IMU_Constant(roll_pitch_yaw=[0.0, 0.0, -np.pi])
-    imuGen = IMU_SHM()
+    imuGen = IMU_Constant(roll_pitch_yaw=[0.0, 0.0, np.pi / 2.0])
+    # imuGen = IMU_Constant(roll_pitch_yaw=[0.0, 0.0, 0.0])
     pub = DummyData(imuGenerator=imuGen)
 
     try:
