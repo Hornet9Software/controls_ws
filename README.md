@@ -22,7 +22,7 @@ source install/setup.bash
 ```
 ros2 launch launch_files base.launch.py
 ```
-6. Launch movement test.
+5. Launch movement test.
 ```
 ros2 launch launch_files movement.launch.py
 ```
