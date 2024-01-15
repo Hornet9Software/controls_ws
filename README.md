@@ -12,32 +12,32 @@ pip3 install simple_pid
 
 ## Pool Testing
 1. Build and source.
-   ```
-   colcon build --symlink-install
-   source install/setup.bash
-   ```
+```
+colcon build --symlink-install
+source install/setup.bash
+```
 2. Modify `/tasks/movement_test.py` as needed to configure state machine and associated movement tasks.
 3. Launch cameras, sensors, etc.
 4. Launch base nodes needed for initialising controls stack.
-   ```
-   ros2 launch launch_files base.launch.py
-   ```
+```
+ros2 launch launch_files base.launch.py
+```
 6. Launch movement test.
-   ```
-   ros2 launch launch_files movement.launch.py
-   ```
+```
+ros2 launch launch_files movement.launch.py
+```
    
 ## Simulation
 1. Build and source.
-   ```
-   colcon build --symlink-install
-   source install/setup.bash
-   ```
+```
+colcon build --symlink-install
+source install/setup.bash
+```
 2. Modify `/simulation/movement_test_sim.py` as needed to configure state machine and associated movement tasks.
 3. Launch simulation.
-   ```
-   ros2 launch launch_files simulation.launch.py
-   ```
+```
+ros2 launch launch_files simulation.launch.py
+```
 
 ## How it Works
 ### Structure
