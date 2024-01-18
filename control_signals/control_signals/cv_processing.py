@@ -1,6 +1,7 @@
-import rclpy
 import math
+
 import numpy as np
+import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
 
@@ -33,7 +34,8 @@ class CVControlSignals(Node):
         for objectName in self.OBJECTS:
             self.listeners[objectName] = self.create_subscription(
                 Float32MultiArray,
-                "/object/" + objectName + "/yolo",
+                "/left/yolo/box",
+                # "/object/" + objectName + "/yolo",
                 lambda msg: self._onReceiveYOLO(objectName, msg),
                 10,
             )

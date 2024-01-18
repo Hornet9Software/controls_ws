@@ -1,12 +1,12 @@
 import numpy as np
 import rclpy
-from controls_core.position_control import PositionControl
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import *
+from controls_core.position_control import PositionControl
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
-from std_msgs.msg import Float32
 from rclpy.node import Node
+from std_msgs.msg import Float32
 from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
@@ -19,7 +19,7 @@ targetRPY = np.array([0, 0, 0])
 
 
 class DepthControlTest(Node):
-    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
+    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=True):
         super().__init__("depth_control_test")
 
         self.targetXYZ = targetXYZ

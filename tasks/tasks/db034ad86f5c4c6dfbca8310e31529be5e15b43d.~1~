@@ -84,7 +84,7 @@ class DiveToDepth(Task):
                 )
             else:
                 self.logger.info("COMPLETED DIVE TO DEPTH {}".format(self.targetDepth))
-                return "done"
+                # return "done"
 
 
 class RotateToYaw(Task):

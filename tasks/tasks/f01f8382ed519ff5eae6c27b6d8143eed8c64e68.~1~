@@ -14,9 +14,9 @@ def main():
     with sm:
         smach.StateMachine.add(
             "DIVE_TO_DEPTH",
-            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
+            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=0),
             # transitions={"done": "ROTATE_TO_YAW"},
-            transitions={"done": "MOVE_TO_GATE"},
+            transitions={"done": "finish"},
         )
         # smach.StateMachine.add(
         #     "ROTATE_TO_YAW",
@@ -28,18 +28,18 @@ def main():
         #     MoveStraightForTime(timeToMove=0.1, setDepth=-1.0, setYaw=1.57),
         #     transitions={"done": "MOVE_TO_GATE"},
         # )
-        smach.StateMachine.add(
-            "MOVE_TO_GATE",
-            MoveToGate(
-                tolerance=0.05,
-                bearingControl=True,
-                lateralControl=False,
-                lateralDirection="right",
-                distanceControl=False,
-                setDepth=-1.0,
-            ),
-            transitions={"done": "finish"},
-        )
+        # smach.StateMachine.add(
+        #     "MOVE_TO_GATE",
+        #     MoveToGate(
+        #         tolerance=0.05,
+        #         bearingControl=True,
+        #         lateralControl=False,
+        #         lateralDirection="right",
+        #         distanceControl=False,
+        #         setDepth=-1.0,
+        #     ),
+        #     transitions={"done": "finish"},
+        # )
 
     try:
         sm.execute()
