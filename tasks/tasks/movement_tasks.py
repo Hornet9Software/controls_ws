@@ -308,8 +308,10 @@ class MoveToGate(Task):
             self.currXYZ = [0.0, 0.0, self.depth]
 
             if self.bearingControl:
-                self.targetRPY[2] = self.cv_data["gate"]["bearing"]
-                self.currRPY[2] = math.pi / 2.0
+                self.targetRPY[2] = (
+                    self.cv_data["gate"]["bearing"] + self.state.angular_position.z
+                )
+                self.currRPY[2] = self.state.angular_position.z
 
             if self.lateralControl:
                 self.targetXYZ[0] = 0.0
