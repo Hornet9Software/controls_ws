@@ -8,3 +8,8 @@ depthPID = PID(Kp=5.0, Ki=0.0, Kd=10.0, sample_time=0.1)
 
 UPTHRUST = 1
 IMU_ZERO = [0.0, 0.0, 0.50]
+
+left_cam_dev = "/dev/video4"
+right_cam_dev = "/dev/video2"
+bottom_cam_dev = "/dev/video0"
+# bottom_cam_dev = "DISABLE"
