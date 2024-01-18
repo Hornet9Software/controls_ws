@@ -45,7 +45,7 @@ class TaskState(Node):
 
         # Initialize self.state
         while (self.state is None) or (self.state is None):
-            rclpy.spin(self)
+            rclpy.spin_once(self)
 
     def _on_receive_state(self, msg):
         self.state = msg
