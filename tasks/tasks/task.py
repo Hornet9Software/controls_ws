@@ -6,6 +6,7 @@ import smach
 from dependency_injector import providers
 from tasks.task_state import TaskState
 
+
 # providers is used to create instances of a class/object
 
 
@@ -18,6 +19,7 @@ class Task(smach.State):
     ):
         super().__init__(outcomes, input_keys, output_keys, io_keys)
 
+        self.name = task_name
         self.task_state = self.task_state_provider(task_name=task_name)
         self.start_time = None
         self.initial_state = None
@@ -52,6 +54,18 @@ class Task(smach.State):
 
     def publish_correction(self, correction):
         self.task_state.correction_publisher.publish(correction)
+
+    def task_complete(self):
+
+        corr = Correction()
+        corr.target_rpy.data = [0.0, 0.0, 0.0]
+        corr.target_xyz.data = [0.0, 0.0, 0.0]
+        corr.current_rpy.data = [0.0, 0.0, 0.0]
+        corr.current_xyz.data = [0.0, 0.0, 0.0]
+        self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
+        self.publish_correction(corr)
+
+        return "done"
 
 
 # class ObjectVisibleTask(Task):

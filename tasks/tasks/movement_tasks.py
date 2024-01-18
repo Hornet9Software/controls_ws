@@ -359,4 +359,4 @@ class MoveToGate(Task):
                 self.publish_correction(corr)
             else:
                 self.logger.info("COMPLETED MOVEMENT TO GATE")
-                return "done"
+                return self.task_complete()
