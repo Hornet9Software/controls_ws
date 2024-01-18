@@ -1,14 +1,7 @@
 import math
-import threading
 import time
+
 import rclpy
-import smach
-import controls_core.utilities as utilities
-
-from controls_core.params import *
-from controls_core.PID import PIDTuner
-
-from custom_msgs.msg import Correction
 
 from tasks.task import Task
 
@@ -87,14 +80,9 @@ class DiveToDepth(Task):
             if not self.stopped_at_position(self.currXYZ[2]):
                 self.logger.info("CURRENT DEPTH: {}".format(self.depth))
 
-                corr = Correction()
-
-                corr.target_rpy.data = self.targetRPY
-                corr.target_xyz.data = self.targetXYZ
-                corr.curr_rpy.data = self.currRPY
-                corr.curr_xyz.data = self.currXYZ
-
-                self.publish_correction(corr)
+                self.correctVehicle(
+                    self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+                )
             else:
                 self.logger.info("COMPLETED DIVE TO DEPTH {}".format(self.targetDepth))
                 return "done"
@@ -158,14 +146,9 @@ class RotateToYaw(Task):
             if not self.stopped_at_bearing(self.currRPY[2]):
                 print("CURRENT YAW", self.currRPY[2])
 
-                corr = Correction()
-
-                corr.target_rpy.data = self.targetRPY
-                corr.target_xyz.data = self.targetXYZ
-                corr.curr_rpy.data = self.currRPY
-                corr.curr_xyz.data = self.currXYZ
-
-                self.publish_correction(corr)
+                self.correctVehicle(
+                    self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+                )
             else:
                 print(
                     "COMPLETED ROTATION TO YAW",
@@ -231,14 +214,9 @@ class MoveStraightForTime(Task):
                     + " MORE SECONDS"
                 )
 
-                corr = Correction()
-
-                corr.target_rpy.data = self.targetRPY
-                corr.target_xyz.data = self.targetXYZ
-                corr.curr_rpy.data = self.currRPY
-                corr.curr_xyz.data = self.currXYZ
-
-                self.publish_correction(corr)
+                self.correctVehicle(
+                    self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+                )
             else:
                 self.logger.info(
                     "COMPLETED FORWARD MOVEMENT FOR "
@@ -349,14 +327,9 @@ class MoveToGate(Task):
                 self.cv_data["gate"]["lateral"],
                 self.cv_data["gate"]["distance"],
             ):
-                corr = Correction()
-
-                corr.target_rpy.data = self.targetRPY
-                corr.target_xyz.data = self.targetXYZ
-                corr.curr_rpy.data = self.currRPY
-                corr.curr_xyz.data = self.currXYZ
-
-                self.publish_correction(corr)
+                self.correctVehicle(
+                    self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+                )
             else:
                 self.logger.info("COMPLETED MOVEMENT TO GATE")
                 return "done"

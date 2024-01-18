@@ -1,17 +1,16 @@
 from abc import abstractmethod
 
-# smach stands for State Machine for Advanced Robots, provides us with state machines
-# A state machine consists of states, state transitions and associated actions
 import smach
+from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
-from tasks.task_state import TaskState
 
-# providers is used to create instances of a class/object
+from tasks.task_state import TaskState
 
 
 class Task(smach.State):
     # Use this to create a single TaskState instance
     task_state_provider = providers.Singleton(TaskState)
+    pid_manager_provider = providers.Singleton(PIDManager)
 
     def __init__(
         self, task_name: str, outcomes, input_keys=[], output_keys=[], io_keys=[]
@@ -19,6 +18,7 @@ class Task(smach.State):
         super().__init__(outcomes, input_keys, output_keys, io_keys)
 
         self.task_state = self.task_state_provider(task_name=task_name)
+        self.pid_manager = self.pid_manager_provider()
         self.start_time = None
         self.initial_state = None
         self.output = {}
@@ -50,8 +50,8 @@ class Task(smach.State):
         self.initial_state = self.state
         return self.run(ud)
 
-    def publish_correction(self, correction):
-        self.task_state.correction_publisher.publish(correction)
+    def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
+        self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
 
 
 # class ObjectVisibleTask(Task):
