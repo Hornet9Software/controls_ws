@@ -33,7 +33,6 @@ setup(
             "attitudeControl = controls_core.attitude_control_test:main",
             "depthControl = controls_core.depth_control_test:main",
             "imu_zeroing = controls_core.imu_zeroing:main",
-            "pid_manager = controls_core.PIDManager:main",
         ],
     },
 )

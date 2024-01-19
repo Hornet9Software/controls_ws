@@ -33,8 +33,6 @@ def generate_launch_description():
 
     imu_signals = Node(package="control_signals", executable="imu_signals")
 
-    pid_manager = Node(package="simulation", executable="pid_manager_sim")
-
     # Launch Foxglove Studio to monitor data
     # foxglove_studio = ExecuteProcess(cmd=["foxglove-studio"])
 
@@ -42,7 +40,6 @@ def generate_launch_description():
     ld = [
         cv_signals,
         imu_signals,
-        pid_manager,
     ]
     # foxglove_studio]
 
