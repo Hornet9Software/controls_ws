@@ -57,13 +57,12 @@ class Task(smach.State):
 
     def task_complete(self):
 
-        corr = Correction()
-        corr.target_rpy.data = [0.0, 0.0, 0.0]
-        corr.target_xyz.data = [0.0, 0.0, 0.0]
-        corr.current_rpy.data = [0.0, 0.0, 0.0]
-        corr.current_xyz.data = [0.0, 0.0, 0.0]
+        self.targetRPY = [0.0, 0.0, 0.0]
+        self.targetXYZ = [0.0, 0.0, 0.0]
+        self.currRPY = [0.0, 0.0, 0.0]
+        self.currentXYZ = [0.0, 0.0, 0.0]
         self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
-        self.publish_correction(corr)
+        self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
 
         return "done"
 
