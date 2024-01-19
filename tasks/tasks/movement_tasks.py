@@ -413,12 +413,7 @@ class HoldCurrentState(Task):
                 self.state.angular_position.y, 0.0, self.state.angular_position.z
             ]
             self.logger.info("CURRENT STATE {} {} TO HOLD AT {} {}".format(self.currXYZ, self.currRPY, self.targetXYZ, self.targetRPY))
+            
 
-
-            corr = Correction()
-
-            corr.target_rpy.data = self.targetRPY
-            corr.target_xyz.data = self.targetXYZ
-            corr.curr_rpy.data = self.currRPY
-            corr.curr_xyz.data = self.currXYZ
-            self.publish_correction(corr)
+         
+            self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
