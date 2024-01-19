@@ -4,6 +4,8 @@ import smach
 from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
 
+
+# providers is used to create instances of a class/object
 from tasks.task_state import TaskState
 
 
@@ -17,6 +19,7 @@ class Task(smach.State):
     ):
         super().__init__(outcomes, input_keys, output_keys, io_keys)
 
+        self.name = task_name
         self.task_state = self.task_state_provider(task_name=task_name)
         self.pid_manager = self.pid_manager_provider()
         self.start_time = None
@@ -53,6 +56,17 @@ class Task(smach.State):
 
     def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
         self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
+
+    def task_complete(self):
+
+        self.targetRPY = [0.0, 0.0, 0.0]
+        self.targetXYZ = [0.0, 0.0, 0.0]
+        self.currRPY = [0.0, 0.0, 0.0]
+        self.currentXYZ = [0.0, 0.0, 0.0]
+        self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
+        self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
+
+        return "done"
 
 
 # class ObjectVisibleTask(Task):

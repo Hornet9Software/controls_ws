@@ -333,7 +333,7 @@ class MoveToGate(Task):
                 )
             else:
                 self.logger.info("COMPLETED MOVEMENT TO GATE")
-                return "done"
+                return self.task_complete()
 
 
 class HoldCurrentState(Task):
