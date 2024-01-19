@@ -334,3 +334,60 @@ class MoveToGate(Task):
             else:
                 self.logger.info("COMPLETED MOVEMENT TO GATE")
                 return "done"
+
+
+class HoldCurrentState(Task):
+    def __init__(self, setPosition=None, setYaw=None, setRoll=None):
+        super().__init__(task_name="hold_current_state")
+        self.task_state.create_rate(100)
+        rclpy.spin_once(self.task_state)
+
+        # Use provided position, otherwise take current position
+        if not setPosition:
+            self.setPosition = [
+                self.linear_position.x,
+                self.linear_position.y,
+                self.depth
+            ]
+        else:
+            self.setPosition = setPosition
+
+        if not setRoll:
+            self.setRoll = self.state.angular_position.y
+            # self.setRoll = 0.0
+        else:
+            self.setRoll = setRoll
+
+        if not setYaw:
+            self.setYaw = self.state.angular_position.z
+        else:
+            self.setYaw = setYaw
+
+        # pitch is 0.0
+        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetXYZ = self.setPosition
+
+
+
+    def execute(self, ud):
+        self.logger.info("INITIALISING HOLD CURRENT STATE AT {} {}".format(self.targetXYZ, self.targetRPY))
+        return super().execute(ud)
+
+    def run(self, ud):
+        while True:
+            rclpy.spin_once(self.task_state)
+
+            self.currXYZ = [
+                self.state.linear_position.x,
+                self.state.linear_position.y,
+                self.depth
+            ]
+
+            self.currRPY = [
+                self.state.angular_position.y, 0.0, self.state.angular_position.z
+            ]
+            self.logger.info("CURRENT STATE {} {} TO HOLD AT {} {}".format(self.currXYZ, self.currRPY, self.targetXYZ, self.targetRPY))
+            
+
+         
+            self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
