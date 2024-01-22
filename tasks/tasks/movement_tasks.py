@@ -98,7 +98,7 @@ class RotateToYaw(Task):
 
         self.setRoll = 0.0
 
-        if not setDepth:
+        if setDepth is None:
             self.setDepth = self.depth
         else:
             self.setDepth = setDepth
@@ -166,14 +166,14 @@ class MoveStraightForTime(Task):
 
         self.timeToMove = timeToMove
 
-        if not setDepth:
+        if setDepth is None:
             self.setDepth = self.depth
         else:
             self.setDepth = setDepth
 
         self.setRoll = 0.0
 
-        if not setYaw:
+        if setYaw is None:
             self.setYaw = self.state.angular_position.z
         else:
             self.setYaw = setYaw
@@ -347,7 +347,7 @@ class HoldCurrentState(Task):
             self.setPosition = [
                 self.linear_position.x,
                 self.linear_position.y,
-                self.depth
+                self.depth,
             ]
         else:
             self.setPosition = setPosition
@@ -367,10 +367,12 @@ class HoldCurrentState(Task):
         self.targetRPY = [self.setRoll, 0.0, self.setYaw]
         self.targetXYZ = self.setPosition
 
-
-
     def execute(self, ud):
-        self.logger.info("INITIALISING HOLD CURRENT STATE AT {} {}".format(self.targetXYZ, self.targetRPY))
+        self.logger.info(
+            "INITIALISING HOLD CURRENT STATE AT {} {}".format(
+                self.targetXYZ, self.targetRPY
+            )
+        )
         return super().execute(ud)
 
     def run(self, ud):
@@ -380,14 +382,20 @@ class HoldCurrentState(Task):
             self.currXYZ = [
                 self.state.linear_position.x,
                 self.state.linear_position.y,
-                self.depth
+                self.depth,
             ]
 
             self.currRPY = [
-                self.state.angular_position.y, 0.0, self.state.angular_position.z
+                self.state.angular_position.y,
+                0.0,
+                self.state.angular_position.z,
             ]
-            self.logger.info("CURRENT STATE {} {} TO HOLD AT {} {}".format(self.currXYZ, self.currRPY, self.targetXYZ, self.targetRPY))
-            
+            self.logger.info(
+                "CURRENT STATE {} {} TO HOLD AT {} {}".format(
+                    self.currXYZ, self.currRPY, self.targetXYZ, self.targetRPY
+                )
+            )
 
-         
-            self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
+            self.correctVehicle(
+                self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+            )
