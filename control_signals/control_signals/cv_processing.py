@@ -94,14 +94,9 @@ class CVControlSignals(Node):
         objectOnLeft = False
         if deltaX < 0:
             objectOnLeft = True
-            deltaX *= -1
+        deltaX *= -1
 
         bearing = math.atan2(deltaX, D)
-
-        if objectOnLeft:
-            bearing += math.pi / 2.0
-        else:
-            bearing = (math.pi / 2) - bearing
 
         print("BEARING: ", bearing)
 
