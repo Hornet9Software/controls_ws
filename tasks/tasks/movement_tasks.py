@@ -2,6 +2,8 @@ import math
 import time
 
 import rclpy
+from controls_core.attitude_control import AttitudeControl
+from controls_core.params import IMU_ZERO, pitchPID, rollPID, yawPID
 from tasks.task import Task
 
 """
@@ -28,13 +30,14 @@ class DiveToDepth(Task):
         self.targetDepth = targetDepth
 
         self.setRoll = 0.0
+        self.setPitch = 0.0
 
         if setYaw is not None:
             self.setYaw = self.state.angular_position.z
         else:
             self.setYaw = setYaw
 
-        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetRPY = [self.setRoll, self.setPitch, self.setYaw]
         self.targetXYZ = [0.0, 0.0, self.targetDepth]
 
         self.prevDepth = 0.0
@@ -97,14 +100,18 @@ class RotateToYaw(Task):
         self.targetYaw = targetYaw
 
         self.setRoll = 0.0
+        self.setPitch = 0.0
 
         if setDepth is None:
             self.setDepth = self.depth
         else:
             self.setDepth = setDepth
 
-        self.targetRPY = [self.setRoll, 0.0, self.targetYaw]
+        self.targetRPY = [self.setRoll, self.setPitch, self.targetYaw]
         self.targetXYZ = [0.0, 0.0, self.setDepth]
+        self.attitudeControl = AttitudeControl(
+            rollPID=rollPID, pitchPID=pitchPID, yawPID=yawPID
+        )
 
         self.prevYaw = 0.0
         self.prevTime = time.time()
@@ -139,6 +146,7 @@ class RotateToYaw(Task):
                 self.state.angular_position.x,
                 self.state.angular_position.z,
             ]
+            self.currRPY = self.attitudeControl.correctIMU(self.currRPY)
 
             self.currXYZ = [0.0, 0.0, self.depth]
 
@@ -172,13 +180,14 @@ class MoveStraightForTime(Task):
             self.setDepth = setDepth
 
         self.setRoll = 0.0
+        self.setPitch = 0.0
 
         if setYaw is None:
             self.setYaw = self.state.angular_position.z
         else:
             self.setYaw = setYaw
 
-        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetRPY = [self.setRoll, self.setPitch, self.setYaw]
         self.targetXYZ = [0.0, 1.0, self.setDepth]
 
     def execute(self, ud):
@@ -230,16 +239,19 @@ class MoveToGate(Task):
         self,
         tolerance=0.1,
         bearingControl=True,
-        lateralControl=True,
+        lateralControl=False,
         lateralDirection="right",
-        distanceControl=True,
+        distanceControl=False,
         setDepth=-1.0,
     ):
-        super().__init__(task_name="rotate_to_yaw", outcomes=["done"])
+        super().__init__(task_name="move_to_gate", outcomes=["done"])
 
         self.task_state.create_rate(100)
         rclpy.spin_once(self.task_state)
 
+        self.attitudeControl = AttitudeControl(
+            rollPID=rollPID, pitchPID=pitchPID, yawPID=yawPID
+        )
         self.bearingControl = bearingControl
         self.lateralControl = lateralControl
         self.distanceControl = distanceControl
@@ -251,7 +263,7 @@ class MoveToGate(Task):
         self.prevDistance = 0.0
         self.prevTime = time.time()
 
-        self.setDepth = -1.0
+        self.setDepth = -1
         self.tolerance = tolerance
 
     def stopped(self, currBearing, currLateral, currDistance):
@@ -287,7 +299,7 @@ class MoveToGate(Task):
         return super().execute(ud)
 
     def run(self, ud):
-        # BEARING | target is bearing; current is pi/2
+        # BEARING | target is bearing; current is 0
         # LATERAL | setpoint is 0; current is lateral
         # DISTANCE | setpoint is distance, current is 0
         while True:
@@ -301,17 +313,21 @@ class MoveToGate(Task):
             ):
                 rclpy.spin_once(self.task_state)
 
-            # self.logger.info("hello123")
             self.targetRPY = [0.0, 0.0, 0.0]
             self.targetXYZ = [0.0, 0.0, self.setDepth]
-            self.currRPY = [self.state.angular_position.y, 0.0, 0.0]
+            self.currRPY = [
+                self.state.angular_position.y,
+                self.state.angular_position.x,
+                0.0,
+            ]
+            self.currRPY = list(self.attitudeControl.correctIMU(self.currRPY))
+            self.currRPY[2] = 0.0
+
             self.currXYZ = [0.0, 0.0, self.depth]
 
             if self.bearingControl:
-                self.targetRPY[2] = (
-                    self.cv_data["gate"]["bearing"] + self.state.angular_position.z
-                )
-                self.currRPY[2] = self.state.angular_position.z
+                self.targetRPY[2] = self.cv_data["gate"]["bearing"]
+                self.currRPY[2] = 0.0
 
             if self.lateralControl:
                 self.targetXYZ[0] = 0.0
@@ -328,43 +344,53 @@ class MoveToGate(Task):
                 self.cv_data["gate"]["lateral"],
                 self.cv_data["gate"]["distance"],
             ):
-                self.correctVehicle(
+                angular_acc, linear_acc = self.correctVehicle(
                     self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
                 )
+                self.logger.info(
+                    f"currRPY {self.currRPY} targetRPY {self.targetRPY} currXYZ {self.currXYZ} targetXYZ {self.targetXYZ}"
+                )
+                self.logger.info(f"Angular acc: {angular_acc}")
+
             else:
                 self.logger.info("COMPLETED MOVEMENT TO GATE")
-                return self.task_complete()
+                # return self.task_complete()
 
 
 class HoldCurrentState(Task):
-    def __init__(self, setPosition=None, setYaw=None, setRoll=None):
+    def __init__(self, setDepth=None, setRoll=None, setPitch=None, setYaw=None):
         super().__init__(task_name="hold_current_state")
         self.task_state.create_rate(100)
         rclpy.spin_once(self.task_state)
 
         # Use provided position, otherwise take current position
-        if not setPosition:
+        if setDepth is None:
             self.setPosition = [
-                self.linear_position.x,
-                self.linear_position.y,
+                0.0,
+                0.0,
                 self.depth,
             ]
         else:
-            self.setPosition = setPosition
+            self.setPosition = [0.0, 0.0, setDepth]
 
-        if not setRoll:
+        if setRoll is None:
             self.setRoll = self.state.angular_position.y
             # self.setRoll = 0.0
         else:
             self.setRoll = setRoll
 
-        if not setYaw:
+        if setPitch is None:
+            self.setPitch = self.state.angular_position.x
+        else:
+            self.setPitch = setPitch
+
+        if setYaw is None:
             self.setYaw = self.state.angular_position.z
         else:
             self.setYaw = setYaw
 
         # pitch is 0.0
-        self.targetRPY = [self.setRoll, 0.0, self.setYaw]
+        self.targetRPY = [self.setRoll, self.setPitch, self.setYaw]
         self.targetXYZ = self.setPosition
 
     def execute(self, ud):
@@ -380,14 +406,14 @@ class HoldCurrentState(Task):
             rclpy.spin_once(self.task_state)
 
             self.currXYZ = [
-                self.state.linear_position.x,
-                self.state.linear_position.y,
+                0.0,
+                0.0,
                 self.depth,
             ]
 
             self.currRPY = [
                 self.state.angular_position.y,
-                0.0,
+                self.state.angular_position.x,
                 self.state.angular_position.z,
             ]
             self.logger.info(

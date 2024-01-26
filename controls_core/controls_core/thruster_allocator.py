@@ -10,10 +10,11 @@ thruster_positions = np.array(
     [
         [-0.22, 0.238, -0.054],     # Front Left
         [0.22, 0.238, -0.054],      # Front Right
-        [-0.234, -0.001, -0.107],   # Middle Left
-        [0.234, -0.001, -0.107],    # Middle Right
         [-0.22, -0.217, -0.054],    # Rear Left
         [0.22, -0.217, -0.054],     # Rear Right
+        [-0.234, 0.2, -0.107],      # Middle Left
+        [0.234, 0.2, -0.107],       # Middle Right
+        [0.0, -0.22, -0.107],       # Middle Middle
     ]
 )
 
@@ -21,20 +22,21 @@ thruster_directions = np.array(
     [
         [1, 1, 0],                  # Front Left
         [-1, 1, 0],                 # Front Right
-        [0, 0, 1],                  # Middle Left
-        [0, 0, 1],                  # Middle Right
         [-1, 1, 0],                 # Rear Left
         [1, 1, 0],                  # Rear Right
+        [0, 0, 1],                  # Middle Left
+        [0, 0, 1],                  # Middle Right
+        [0, 0, 1],                  # Middle Middle
     ]
 )
 
 thruster_biases = np.array([1.0,    # Front Left
                             1.0,    # Front Right
+                            1.0,    # Rear Left
+                            1.0,    # Rear Right
                             1.0,    # Middle Left
                             1.0,    # Middle Right
-                            1.0,    # Rear Left
-                            1.0])   # Rear Right
-# fmt: on
+                            1.0,])  # Middle Middle
 
 thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1

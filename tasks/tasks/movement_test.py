@@ -12,12 +12,12 @@ def main():
     sm = smach.StateMachine(outcomes=["finish"])
 
     with sm:
-        smach.StateMachine.add(
-            "DIVE_TO_DEPTH",
-            DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
-            # transitions={"done": "ROTATE_TO_YAW"},
-            transitions={"done": "MOVE_TO_GATE"},
-        )
+        # smach.StateMachine.add(
+        #     "DIVE_TO_DEPTH",
+        #     DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
+        #     # transitions={"done": "ROTATE_TO_YAW"},
+        #     transitions={"done": "MOVE_TO_GATE"},
+        # )
         # smach.StateMachine.add(
         #     "ROTATE_TO_YAW",
         #     RotateToYaw(targetYaw=math.radians(95.0), tolerance=0.02, setDepth=-1.0),

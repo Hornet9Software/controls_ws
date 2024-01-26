@@ -4,7 +4,6 @@ import smach
 from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
 
-
 # providers is used to create instances of a class/object
 from tasks.task_state import TaskState
 
@@ -43,7 +42,6 @@ class Task(smach.State):
     def logger(self):
         return self.task_state.get_logger()
 
-
     @abstractmethod
     def run(self, ud):
         # To be overwritten by a subclass
@@ -55,10 +53,9 @@ class Task(smach.State):
         return self.run(ud)
 
     def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
-        self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
+        return self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
 
     def task_complete(self):
-
         self.targetRPY = [0.0, 0.0, 0.0]
         self.targetXYZ = [0.0, 0.0, 0.0]
         self.currRPY = [0.0, 0.0, 0.0]

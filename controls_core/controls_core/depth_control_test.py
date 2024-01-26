@@ -11,7 +11,7 @@ from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
-attitudeControl = AttitudeControl(rollPID, yawPID)
+attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
 targetXYZ = np.array([0, 0, -1])
@@ -19,7 +19,7 @@ targetRPY = np.array([0, 0, 0])
 
 
 class DepthControlTest(Node):
-    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=True):
+    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
         super().__init__("depth_control_test")
 
         self.targetXYZ = targetXYZ
@@ -62,6 +62,10 @@ class DepthControlTest(Node):
         linearAcc = positionControl.getPositionCorrection(
             currXYZ=self.currXYZ, targetXYZ=targetXYZ
         )
+
+        self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
+        self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
+        self.get_logger().info(f"Correction: {linearAcc}")
 
         # FL-FR-ML-MR-RL-RR
         thrustValues = thrustAllocator.getThrustPWMs(linearAcc, angularAcc)
