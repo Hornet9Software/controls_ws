@@ -162,7 +162,7 @@ class RotateToYaw(Task):
                     self.targetYaw,
                     "\n\n=========\n",
                 )
-                return "done"
+                # return "done"
 
 
 class MoveStraightForTime(Task):
@@ -347,6 +347,7 @@ class MoveToGate(Task):
                 angular_acc, linear_acc = self.correctVehicle(
                     self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
                 )
+
                 self.logger.info(
                     f"currRPY {self.currRPY} targetRPY {self.targetRPY} currXYZ {self.currXYZ} targetXYZ {self.targetXYZ}"
                 )
