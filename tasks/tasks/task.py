@@ -3,6 +3,7 @@ from abc import abstractmethod
 import smach
 from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
+from thrusters.thrusters import ThrusterControl
 
 # providers is used to create instances of a class/object
 from tasks.task_state import TaskState
@@ -21,6 +22,7 @@ class Task(smach.State):
         self.name = task_name
         self.task_state = self.task_state_provider(task_name=task_name)
         self.pid_manager = self.pid_manager_provider()
+        self.thruster_controller = ThrusterControl()
         self.start_time = None
         self.initial_state = None
         self.output = {}
@@ -47,21 +49,22 @@ class Task(smach.State):
         # To be overwritten by a subclass
         pass
 
+    def kill(self):
+        return self.thruster_controller.killThrusters()
+    
     def execute(self, ud):
         # Sets initital_state as current task state
         self.initial_state = self.state
+        # cansend 7F
+        self.kill()
         return self.run(ud)
 
     def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
         return self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
 
     def task_complete(self):
-        self.targetRPY = [0.0, 0.0, 0.0]
-        self.targetXYZ = [0.0, 0.0, 0.0]
-        self.currRPY = [0.0, 0.0, 0.0]
-        self.currentXYZ = [0.0, 0.0, 0.0]
         self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
-        self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
+        self.kill()
 
         return "done"
 
