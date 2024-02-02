@@ -6,7 +6,7 @@ from controls_core.position_control import PositionControl
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
 from rclpy.node import Node
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float32MultiArray
 from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
@@ -14,11 +14,11 @@ thrustAllocator = ThrustAllocator()
 attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
-targetXYZ = np.array([0, 0, -0.5])
-targetRPY = np.array([0, 0, 0])
+targetXYZ = np.array([0, 0, -1.2])
+targetRPY = [0, 0, 0]
 
 
-class DepthControlTest(Node):
+class RotateToGateTest(Node):
     def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
         super().__init__("depth_control_test")
 
@@ -40,6 +40,25 @@ class DepthControlTest(Node):
             Imu, "/sensors/imu", self._imuProcessing, 10
         )
 
+        self.gate_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/gate/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "gate"),
+            10,
+        )
+
+        self.cv_data = {"gate": {}}
+
+    def _on_receive_cv_data(self, msg: Float32MultiArray, objectName):
+        msgData = np.array(msg.data).tolist()
+        self.cv_data[objectName]["bearing"] = msgData[0]
+        self.cv_data[objectName]["lateral"] = msgData[1]
+        self.cv_data[objectName]["distance"] = msgData[2]
+
+        self.targetRPY[2] = msgData[0]
+        self.get_logger().info(self.cv_data.__repr__())
+        self.get_logger().info(f"Target RPY changed to {self.targetRPY}")
+
     def _imuProcessing(self, msg: Imu):
         self.currRPY = [
             msg.roll_pitch_yaw.x,
@@ -53,6 +72,7 @@ class DepthControlTest(Node):
     def _controlLoop(self):
         if self.testRPYControl:
             self.currRPY = attitudeControl.correctIMU(self.currRPY)
+            self.currRPY[2] = 0.0
             angularAcc = attitudeControl.getAttitudeCorrection(
                 currRPY=self.currRPY, targetRPY=self.targetRPY
             )
@@ -64,8 +84,20 @@ class DepthControlTest(Node):
             currXYZ=self.currXYZ, targetXYZ=targetXYZ
         )
 
-        self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
-        self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
+        if (
+            abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
+            < 0.10
+            or self.cv_data["gate"]["distance"] < 1
+        ):
+            linearAcc[1] = 2.0
+        else:
+            linearAcc[1] = 0.0
+
+        # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
+        # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
+        self.get_logger().info(
+            f"Target RPY: {self.targetRPY}, Curr RPY: {self.currRPY}"
+        )
         self.get_logger().info(f"Correction: {linearAcc}")
 
         # FL-FR-ML-MR-RL-RR
@@ -75,7 +107,7 @@ class DepthControlTest(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    depthTest = DepthControlTest(testRPYControl=True)
+    depthTest = RotateToGateTest(testRPYControl=True)
 
     try:
         rclpy.spin(depthTest)

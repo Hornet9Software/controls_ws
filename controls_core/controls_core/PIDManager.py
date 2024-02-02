@@ -14,7 +14,7 @@ class PIDManager:
         self.thrustAllocator = ThrustAllocator()
 
         self.attitudeControl = AttitudeControl(
-            rollPID=rollPID, pitchPID=pitchPID, yawPID=yawPID_camera
+            rollPID=rollPID, pitchPID=pitchPID, yawPID=yawPID
         )
         self.positionControl = PositionControl(
             distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
