@@ -18,14 +18,9 @@ targetXYZ = np.array([0, 0, -1.2])
 targetRPY = [0, 0, 0]
 
 
-class RotateToGateTest(Node):
-    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
-        super().__init__("depth_control_test")
-
-        self.targetXYZ = targetXYZ
-        self.targetRPY = targetRPY
-
-        self.testRPYControl = testRPYControl
+class ObstacleAvoidanceTest(Node):
+    def __init__(self):
+        super().__init__("obstacle_avoidance_test")
 
         self.create_timer(0.1, self._controlLoop)
 
@@ -42,7 +37,7 @@ class RotateToGateTest(Node):
 
         self.gate_listener = self.create_subscription(
             Float32MultiArray,
-            "/object/gate/bearing_lateral_distance",
+            "/object/orange-flare/bearing_lateral_distance",
             lambda msg: self._on_receive_cv_data(msg, "gate"),
             10,
         )
@@ -71,7 +66,7 @@ class RotateToGateTest(Node):
 
     def _controlLoop(self):
         if self.testRPYControl:
-            # self.currRPY = attitudeControl.correctIMU(self.currRPY)
+            self.currRPY = attitudeControl.correctIMU(self.currRPY)
             self.currRPY[2] = 0.0
             angularAcc = attitudeControl.getAttitudeCorrection(
                 currRPY=self.currRPY, targetRPY=self.targetRPY

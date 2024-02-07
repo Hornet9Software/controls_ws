@@ -34,8 +34,7 @@ class CVControlSignals(Node):
         for objectName in self.OBJECTS:
             self.listeners[objectName] = self.create_subscription(
                 Float32MultiArray,
-                "/left/yolo/box",
-                # "/object/" + objectName + "/yolo",
+                "/left/yolo/box" if objectName == "gate" else "/object/"+objectName+"/yolo",
                 lambda msg: self._onReceiveYOLO(objectName, msg),
                 10,
             )

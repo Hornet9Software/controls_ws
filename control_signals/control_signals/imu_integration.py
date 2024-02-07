@@ -8,7 +8,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 
 
 class IMUIntegration(Node):
-    RAW_TOPIC = "/sensors/imu"
+    RAW_TOPIC = "/sensors/imu/corrected"
     PROCESSED_TOPIC = "/sensors/imu/processed"
 
     def __init__(self):
