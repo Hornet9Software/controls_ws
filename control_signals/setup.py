@@ -19,7 +19,8 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "cv_signals = control_signals.cv_processing:main",
+            # "cv_signals = control_signals.cv_processing:main",
+            "cv_signals = control_signals.cv_processing_new:main",
             "imu_signals = control_signals.imu_integration:main",
         ],
     },

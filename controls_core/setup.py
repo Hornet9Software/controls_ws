@@ -35,6 +35,7 @@ setup(
             "imu_zeroing = controls_core.imu_zeroing:main",
             "teleop = controls_core.teleop:main",
             "rotate_to_gate = controls_core.rotate_to_gate_test:main",
+            "obstacle_avoidance = controls_core.obstacle_avoidance_test:main",
         ],
     },
 )
