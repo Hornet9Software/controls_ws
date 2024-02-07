@@ -14,35 +14,42 @@ thrustAllocator = ThrustAllocator()
 attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
-targetXYZ = np.array([0, 0, -1.2])
-targetRPY = [0, 0, 0]
-
 
 class ObstacleAvoidanceTest(Node):
-    def __init__(self):
+    def __init__(
+        self,
+        targetXYZ=[0.0, 0.0, -1.2],
+        objectName="orange-flare",
+        x_power=2,
+        y_power=2,
+    ):
         super().__init__("obstacle_avoidance_test")
 
-        self.create_timer(0.1, self._controlLoop)
+        self.objectName = objectName
+        self.x_power = x_power
+        self.y_power = y_power
 
         self.currXYZ = [0.0, 0.0, 0.0]
-        self.currRPY = [0.0, 0.0, 0.0]
+        self.targetXYZ = targetXYZ
 
         self.depthListener = self.create_subscription(
             Float32, "/sensors/depth", self._depthProcessing, 10
         )
 
-        self.imuListener = self.create_subscription(
-            Imu, "/sensors/imu/corrected", self._imuProcessing, 10
-        )
+        # self.imuListener = self.create_subscription(
+        #     Imu, "/sensors/imu/corrected", self._imuProcessing, 10
+        # )
 
-        self.gate_listener = self.create_subscription(
+        self.flare_listener = self.create_subscription(
             Float32MultiArray,
-            "/object/orange-flare/bearing_lateral_distance",
-            lambda msg: self._on_receive_cv_data(msg, "gate"),
+            f"/object/{self.objectName}/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, self.objectName),
             10,
         )
 
-        self.cv_data = {"gate": {}}
+        self.cv_data = {"gate": {}, self.objectName: {}}
+
+        self.create_timer(0.1, self._controlLoop)
 
     def _on_receive_cv_data(self, msg: Float32MultiArray, objectName):
         msgData = np.array(msg.data).tolist()
@@ -50,43 +57,36 @@ class ObstacleAvoidanceTest(Node):
         self.cv_data[objectName]["lateral"] = msgData[1]
         self.cv_data[objectName]["distance"] = msgData[2]
 
-        self.targetRPY[2] = msgData[0]
         self.get_logger().info(self.cv_data.__repr__())
-        self.get_logger().info(f"Target RPY changed to {self.targetRPY}")
 
-    def _imuProcessing(self, msg: Imu):
-        self.currRPY = [
-            msg.roll_pitch_yaw.x,
-            msg.roll_pitch_yaw.y,
-            msg.roll_pitch_yaw.z,
-        ]
+    # def _imuProcessing(self, msg: Imu):
+    #     self.currRPY = [
+    #         msg.roll_pitch_yaw.x,
+    #         msg.roll_pitch_yaw.y,
+    #         msg.roll_pitch_yaw.z,
+    #     ]
 
     def _depthProcessing(self, msg: Float32):
         self.currXYZ[2] = msg.data
 
     def _controlLoop(self):
-        if self.testRPYControl:
-            self.currRPY = attitudeControl.correctIMU(self.currRPY)
-            self.currRPY[2] = 0.0
-            angularAcc = attitudeControl.getAttitudeCorrection(
-                currRPY=self.currRPY, targetRPY=self.targetRPY
-            )
-            self.get_logger().info(f"PID angular acceleration: {angularAcc}")
-        else:
-            angularAcc = [0.0, 0.0, 0.0]
+        angularAcc = [0.0, 0.0, 0.0]
+
+        theta = self.cv_data[self.objectName]["bearing"]
+        d = self.cv_data[self.objectName]["distance"]
+
+        sgn_theta = np.sign(theta)
+        theta = np.abs(theta)
+
+        x_repulsion = ((d * np.sin(theta)) ** self.x_power) * sgn_theta
+        y_repulsion = ((d * np.cos(theta)) ** self.y_power) * -1.0
+
+        self.targetXYZ[0] = x_repulsion
+        self.targetXYZ[1] = y_repulsion
 
         linearAcc = positionControl.getPositionCorrection(
-            currXYZ=self.currXYZ, targetXYZ=targetXYZ
+            currXYZ=self.currXYZ, targetXYZ=self.targetXYZ
         )
-
-        if (
-            abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
-            < 0.10
-            or self.cv_data["gate"]["distance"] < 1
-        ):
-            linearAcc[1] = 2.0
-        else:
-            linearAcc[1] = 0.0
 
         # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
         # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
@@ -102,10 +102,10 @@ class ObstacleAvoidanceTest(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    depthTest = RotateToGateTest(testRPYControl=True)
+    obstacleTest = ObstacleAvoidanceTest()
 
     try:
-        rclpy.spin(depthTest)
+        rclpy.spin(obstacleTest)
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         thrusterControl.killThrusters()
     finally:
