@@ -20,8 +20,8 @@ class ObstacleAvoidanceTest(Node):
         self,
         targetXYZ=[0.0, 0.0, -1.2],
         objectName="orange-flare",
-        x_power=2,
-        y_power=2,
+        x_power=-2,
+        y_power=-2,
     ):
         super().__init__("obstacle_avoidance_test")
 
