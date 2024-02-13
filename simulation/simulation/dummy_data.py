@@ -1,13 +1,13 @@
-import rclpy
-import numpy as np
 import math
 import random
-
-from std_msgs.msg import Header, Float32, Float32MultiArray
-from rclpy.node import Node
 from abc import ABC, abstractmethod
+
+import numpy as np
+import rclpy
 from geometry_msgs.msg import Vector3
 from imu_msg.msg import Imu
+from rclpy.node import Node
+from std_msgs.msg import Float32, Float32MultiArray, Header
 
 
 class IMU_Generator(ABC):
@@ -59,14 +59,14 @@ class DummyData(Node):
         self.imuTimer = self.create_timer(self.imuUpdatePeriod, self.imuDummyData)
 
     def yoloDummyData(self):
-        xMin = random.uniform(0.2, 0.8)
-        xMax = random.uniform(xMin, 1.0)
+        xMin = random.uniform(0.2 * 640, 0.8 * 640)
+        xMax = random.uniform(xMin, 640)
         x = (xMin + xMax) / 2.0
         w = xMax - xMin
 
         # Assuming AUV is centred vertically to gate
-        y = 0.5
-        h = random.uniform(0.2, 0.95)
+        y = 240
+        h = random.uniform(0.2 * 480, 0.95 * 480)
 
         msg = Float32MultiArray()
         msg.data = [x, y, w, h]
