@@ -19,7 +19,7 @@ class ObstacleAvoidanceTest(Node):
     def __init__(
         self,
         targetXYZ=[0.0, 0.0, -1.2],
-        objectName="orange-flare",
+        objectName="gate",
         x_power=-2,
         y_power=-2,
     ):

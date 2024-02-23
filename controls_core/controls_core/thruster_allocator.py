@@ -12,8 +12,8 @@ thruster_positions = np.array(
         [0.22, 0.238, -0.054],      # Front Right
         [-0.22, -0.217, -0.054],    # Rear Left
         [0.22, -0.217, -0.054],     # Rear Right
-        [-0.234, 0.2, -0.107],      # Middle Left
-        [0.234, 0.2, -0.107],       # Middle Right
+        [-0.234, 0.22, -0.107],      # Middle Left
+        [0.234, 0.22, -0.107],       # Middle Right
         [0.0, -0.22, -0.107],       # Middle Middle
     ]
 )
@@ -82,7 +82,7 @@ class ThrustAllocator:
         self.expected_torque = self.I * angular_accelerations
         self.goal = np.concatenate((self.expected_force, self.expected_torque))
 
-        THRUSTER_CAP = 0.2
+        THRUSTER_CAP = 0.4
 
         lb = THRUSTER_CAP * np.min(self.thrust_map[:, 0])
         ub = THRUSTER_CAP * np.max(self.thrust_map[:, 0])

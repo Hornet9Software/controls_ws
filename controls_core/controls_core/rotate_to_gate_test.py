@@ -11,7 +11,7 @@ from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
-attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
+attitudeControl = AttitudeControl(rollPID, pitchPID, cameraSteerPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
 targetXYZ = np.array([0, 0, -1.2])
@@ -89,9 +89,9 @@ class RotateToGateTest(Node):
             < 0.10
             or self.cv_data["gate"]["distance"] < 1
         ):
-            linearAcc[1] = 2.0
-        else:
             linearAcc[1] = 0.0
+        else:
+            linearAcc[1] = 1.0
 
         # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
         # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")

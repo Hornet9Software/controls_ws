@@ -11,24 +11,32 @@ from vision_msgs.msg import Detection2DArray
 
 
 class CVControlSignals(Node):
-    CAMERAS = ["left"]
+    CAMERAS = ["bottom"]
     OBJECT_MAP = {
         0: "gate",
-        1: "orange-flare",
-        2: "blue-flare",
-        3: "red-flare",
-        4: "yellow-flare",
-        5: "blue-drum",
-        6: "red-drum",
+        1: "orange_flare",
+        2: "blue_flare",
+        3: "red_flare",
+        4: "yellow_flare",
+        5: "blue_drum",
+        6: "red_drum",
     }
 
-    OBJECT_DIMENSIONS = {"gate": (1.5, 1.0), "orange-flare": (0.15, 1.5)}
+    OBJECT_DIMENSIONS = {
+        "gate": (1.5, 1.0), 
+        "orange_flare": (0.15, 1.5), 
+        "red_flare": (0.15, 1.5), 
+        "blue_flare": (0.15, 1.5), 
+        "yellow_flare": (0.15, 1.5), 
+        "blue_drum": (0.15, 1.5), 
+        "red_drum": (0.15, 1.5), 
+    }
     IMAGE_WIDTH_PIXELS = 640
     IMAGE_HEIGHT_PIXELS = 480
     IMAGE_CENTROID = (IMAGE_HEIGHT_PIXELS / 2.0, IMAGE_HEIGHT_PIXELS / 2.0)
     QUEUE_SIZE = 10
-    HFOV = math.radians(50.7)
-    VFOV = math.radians(37.7)
+    HFOV = math.radians(46)
+    VFOV = math.radians(34)
 
     def __init__(self):
         super().__init__("cv_control_signals_processor")
@@ -40,12 +48,12 @@ class CVControlSignals(Node):
         for camera in self.CAMERAS:
             self.detection_listeners[camera] = self.create_subscription(
                 Detection2DArray,
-                f"{camera}/detections_output",
+                f"{camera}/rect/detections_output",
                 lambda msg: self.detections_callback(camera, msg),
                 10,
             )
 
-        for object_name in self.OBJECT_MAP.keys():
+        for object_name in self.OBJECT_MAP.values():
             self.object_publishers[object_name] = self.create_publisher(
                 Float32MultiArray,
                 "/object/" + object_name + "/bearing_lateral_distance",
