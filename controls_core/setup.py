@@ -32,6 +32,7 @@ setup(
             # "steer = controls_core.steer:main",
             "attitudeControl = controls_core.attitude_control_test:main",
             "depthControl = controls_core.depth_control_test:main",
+            "qualiSequence = controls_core.quali_sequence:main",
             "imu_zeroing = controls_core.imu_zeroing:main",
             "teleop = controls_core.teleop:main",
             "rotate_to_gate = controls_core.rotate_to_gate_test:main",

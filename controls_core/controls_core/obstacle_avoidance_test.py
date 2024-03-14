@@ -1,13 +1,15 @@
 import numpy as np
 import rclpy
-from controls_core.attitude_control import AttitudeControl
-from controls_core.params import *
-from controls_core.position_control import PositionControl
-from controls_core.thruster_allocator import ThrustAllocator
+import math
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
 from thrusters.thrusters import ThrusterControl
+
+from controls_core.attitude_control import AttitudeControl
+from controls_core.params import *
+from controls_core.position_control import PositionControl
+from controls_core.thruster_allocator import ThrustAllocator
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
@@ -21,13 +23,17 @@ class ObstacleAvoidanceTest(Node):
         targetXYZ=[0.0, 0.0, -1.2],
         objectName="gate",
         x_power=-2,
-        y_power=-2,
+        y_power=-1,
+        x_fac=0,
+        y_fac=0
     ):
         super().__init__("obstacle_avoidance_test")
 
         self.objectName = objectName
         self.x_power = x_power
         self.y_power = y_power
+        self.x_fac = x_fac
+        self.y_fac = y_fac
 
         self.currXYZ = [0.0, 0.0, 0.0]
         self.targetXYZ = targetXYZ
@@ -47,7 +53,7 @@ class ObstacleAvoidanceTest(Node):
             10,
         )
 
-        self.cv_data = {"gate": {}, self.objectName: {}}
+        self.cv_data = {self.objectName: {"bearing": 0.0, "lateral": 0.0, "distance": 0.0}}
 
         self.create_timer(0.1, self._controlLoop)
 
@@ -77,10 +83,13 @@ class ObstacleAvoidanceTest(Node):
 
         sgn_theta = np.sign(theta)
         theta = np.abs(theta)
+        
+        x_repulsion = self.x_fac * ((d * np.sin(theta)) ** self.x_power) * sgn_theta
+        y_repulsion = self.y_fac * ((d * np.cos(theta)) ** self.y_power) * -1.0
 
-        x_repulsion = ((d * np.sin(theta)) ** self.x_power) * sgn_theta
-        y_repulsion = ((d * np.cos(theta)) ** self.y_power) * -1.0
-
+        x_repulsion = 0.0 if math.isnan(x_repulsion) else x_repulsion
+        y_repulsion = 0.0 if math.isnan(y_repulsion) else y_repulsion
+            
         self.targetXYZ[0] = x_repulsion
         self.targetXYZ[1] = y_repulsion
 
@@ -91,7 +100,7 @@ class ObstacleAvoidanceTest(Node):
         # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
         # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
         self.get_logger().info(
-            f"Target RPY: {self.targetRPY}, Curr RPY: {self.currRPY}"
+            f"Target YXZ: {self.targetXYZ}, Curr XYZ: {self.currXYZ}"
         )
         self.get_logger().info(f"Correction: {linearAcc}")
 
