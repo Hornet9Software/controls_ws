@@ -22,6 +22,7 @@ setup(
             # "test_publish_global_pose = tasks.test_publish_global_pose_task:main",
             # "test_publish_current_state = tasks.test_publish_current_state:main",
             "movement_test = tasks.movement_test:main",
+            "yasmin_test = tasks.yasmin_test:main"
         ],
     },
 )
