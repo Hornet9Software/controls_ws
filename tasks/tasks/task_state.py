@@ -1,25 +1,33 @@
-import numpy as np
-import rclpy
 import threading
 
-from std_msgs.msg import Float32, Float32MultiArray
+import numpy as np
+import rclpy
+from custom_msgs.msg import Correction, State
 from imu_msg.msg import Imu
-from custom_msgs.msg import State, Correction
 from rclpy.node import Node
+from std_msgs.msg import Float32, Float32MultiArray
 
 
 class TaskState(Node):
     STATE_TOPIC = (
-        "/sensors/imu/processed"  # once sensor fusion is up, this should be "/state".
+        "/sensors/imu/corrected"  # once sensor fusion is up, this should be "/state".
     )
     CORRECTION_TOPIC = "/controls/correction"
-    CV_OBJECTS = ["gate"]
+    CV_OBJECTS = [
+        "gate",
+        "orange_flare",
+        "blue_flare",
+        "red_flare",
+        "yellow_flare",
+        "blue_drum",
+        "red_drum",
+    ]
     DEPTH_TOPIC = "/sensors/depth"  # no need for this once sensor fusion is up
 
     def __init__(self):
         super().__init__(f"task_state_node")
         self.state_listener = self.create_subscription(
-            State, self.STATE_TOPIC, self._on_receive_state, 10
+            Imu, self.STATE_TOPIC, self._on_receive_state, 10
         )
 
         self.depth_listener = self.create_subscription(
@@ -45,28 +53,18 @@ class TaskState(Node):
                 10,
             )
 
-        # Initialize self.state
-        # while (self.state is None) or (self.depth is None):
-        #     rclpy.spin_once(self)
-
-        threading.Thread(target=self._spin_node).start()
-
-    
     @classmethod
     def create_task_state(cls, task_name):
         return cls(task_name)
-    
-    def _spin_node(self):
-        rclpy.spin(self)
-    
+
     def stop_spinning(self):
         self.destroy_node()
-    
+
     def __del__(self):
         self.stop_spinning()
 
     def _on_receive_state(self, msg):
-        self.state = msg
+        self.state = [msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z]
 
     def _on_receive_depth(self, msg):
         self.depth = msg.data

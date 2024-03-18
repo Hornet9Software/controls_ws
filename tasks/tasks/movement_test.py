@@ -1,53 +1,43 @@
-import math
+import time
 
 import rclpy
-import smach
+from simple_node import Node
 from tasks.movement_tasks import *
-from thrusters.thrusters import ThrusterControl
+from yasmin import StateMachine
+from yasmin_viewer import YasminViewerPub
 
 
-def main():
-    rclpy.init()
+class SM(Node):
+    def __init__(self):
+        super().__init__("task_node")
 
-    sm = smach.StateMachine(outcomes=["finish"])
+        sm = StateMachine(outcomes=["finish"])
 
-    with sm:
-        # smach.StateMachine.add(
-        #     "DIVE_TO_DEPTH",
-        #     DiveToDepth(targetDepth=-1.0, tolerance=0.05, setYaw=1.57),
-        #     # transitions={"done": "ROTATE_TO_YAW"},
-        #     transitions={"done": "finish"},
-        # )
-        smach.StateMachine.add(
-            "ROTATE_TO_YAW",
-            RotateToYaw(targetYaw=math.radians(95.0), tolerance=0.02, setDepth=-1.0),
+        sm.add_state(
+            "HOLD",
+            HoldForTime(
+                outcomes=["done"],
+                time_to_hold=20,
+                target_depth=-1.2,
+                targetRPY=[0.0, 0.0, 0.0],
+            ),
             transitions={"done": "finish"},
         )
-        # smach.StateMachine.add(
-        #     "MOVE_STRAIGHT",
-        #     MoveStraightForTime(timeToMove=0.1, setDepth=-1.0, setYaw=1.57),
-        #     transitions={"done": "MOVE_TO_GATE"},
-        # )
-        # smach.StateMachine.add(
-        #     "MOVE_TO_GATE",
-        #     MoveToGate(
-        #         tolerance=0.05,
-        #         bearingControl=True,
-        #         lateralControl=False,
-        #         lateralDirection="right",
-        #         distanceControl=False,
-        #         setDepth=-1.0,
-        #     ),
-        #     transitions={"done": "finish"},
-        # )
 
-    try:
-        sm.execute()
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        thrusterControl = ThrusterControl()
-        thrusterControl.killThrusters()
-    finally:
-        rclpy.try_shutdown()
+        outcome = sm()
+
+        YasminViewerPub(self, "HORNET", sm)
+        print(outcome)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    Task.init_task_state()
+
+    state_machine = SM()
+    state_machine.join_spin()
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
