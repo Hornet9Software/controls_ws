@@ -89,9 +89,11 @@ class RotateToGateTest(Node):
             < 0.10
             or self.cv_data["gate"]["distance"] < 1
         ):
-            linearAcc[1] = 0.0
+            linearAcc[1] = 1.5
+            # self.get_logger().info(f"Stopped")
         else:
-            linearAcc[1] = 1.0
+            linearAcc[1] = 0.0
+            # self.get_logger().info(f"Moving")
 
         # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
         # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
