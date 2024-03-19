@@ -20,13 +20,18 @@ class PIDManager:
             distancePID=distancePID, lateralPID=lateralPID, depthPID=depthPID
         )
 
-    def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
+    def correctVehicle(
+        self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None
+    ):
         angularAcc = self.attitudeControl.getAttitudeCorrection(
             currRPY=currRPY, targetRPY=targetRPY
         )
         linearAcc = self.positionControl.getPositionCorrection(
             currXYZ=currXYZ, targetXYZ=targetXYZ
         )
+
+        if override_forward_acceleration is not None:
+            linearAcc[1] = override_forward_acceleration
 
         thrustValues = self.thrustAllocator.getThrustPWMs(linearAcc, angularAcc)
         logging.info("CORRECTNG WITH THRUST: " + str(thrustValues))

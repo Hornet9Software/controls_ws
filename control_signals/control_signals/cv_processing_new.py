@@ -23,13 +23,13 @@ class CVControlSignals(Node):
     }
 
     OBJECT_DIMENSIONS = {
-        "gate": (1.5, 1.0), 
-        "orange_flare": (0.15, 1.5), 
-        "red_flare": (0.15, 1.5), 
-        "blue_flare": (0.15, 1.5), 
-        "yellow_flare": (0.15, 1.5), 
-        "blue_drum": (0.15, 1.5), 
-        "red_drum": (0.15, 1.5), 
+        "gate": (1.5, 1.0),
+        "orange_flare": (0.15, 1.5),
+        "red_flare": (0.15, 1.5),
+        "blue_flare": (0.15, 1.5),
+        "yellow_flare": (0.15, 1.5),
+        "blue_drum": (0.15, 1.5),
+        "red_drum": (0.15, 1.5),
     }
     IMAGE_WIDTH_PIXELS = 640
     IMAGE_HEIGHT_PIXELS = 480
@@ -54,6 +54,8 @@ class CVControlSignals(Node):
             )
 
         for object_name in self.OBJECT_MAP.values():
+#             if object_name == "orange_flare":
+#                 continue
             self.object_publishers[object_name] = self.create_publisher(
                 Float32MultiArray,
                 "/object/" + object_name + "/bearing_lateral_distance",
@@ -68,6 +70,8 @@ class CVControlSignals(Node):
             h = detection.bbox.size_y
 
             object_name = self.OBJECT_MAP[int(detection.results[0].hypothesis.class_id)]
+#             if object_name == "orange_flare":
+#                 continue
 
             object_width = self.OBJECT_DIMENSIONS[object_name][0]
             object_height = self.OBJECT_DIMENSIONS[object_name][1]
@@ -78,7 +82,7 @@ class CVControlSignals(Node):
             y_max = y_centre + h / 2.0
 
             self.get_logger().info(
-                "XMIN XMAX YMIN YMAX: {}, {}, {}, {}".format(x_min, x_max, y_min, y_max)
+                "{} XMIN XMAX YMIN YMAX: {}, {}, {}, {}".format(object_name, x_min, x_max, y_min, y_max)
             )
 
             object_width_pixels = x_max - x_min

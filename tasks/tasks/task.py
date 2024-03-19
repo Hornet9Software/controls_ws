@@ -1,34 +1,43 @@
+import threading
 from abc import abstractmethod
 
-import smach
+import rclpy
 from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
-
-# providers is used to create instances of a class/object
 from tasks.task_state import TaskState
+from yasmin import State
 
 
-class Task(smach.State):
-    # Use this to create a single TaskState instance
-    task_state_provider = providers.Singleton(TaskState)
-    pid_manager_provider = providers.Singleton(PIDManager)
+class Task(State):
+    TASK_STATE_PROVIDER = providers.ThreadSafeSingleton(TaskState)
+    PID_MANAGER_PROVIDER = providers.Singleton(PIDManager)
 
-    def __init__(
-        self, task_name: str, outcomes, input_keys=[], output_keys=[], io_keys=[]
-    ):
-        super().__init__(outcomes, input_keys, output_keys, io_keys)
+    def __init__(self, outcomes):
 
-        self.name = task_name
-        self.task_state = self.task_state_provider(task_name=task_name)
+        super().__init__(outcomes)
+
+        self.task_state = self.task_state_provider()
         self.pid_manager = self.pid_manager_provider()
         self.start_time = None
         self.initial_state = None
         self.output = {}
 
-    # Use as task.state
+    @classmethod
+    def init_task_state(cls):
+        rclpy.init()
+        task_state = cls.TASK_STATE_PROVIDER()
+        executor = rclpy.executors.MultiThreadedExecutor()
+        executor.add_node(task_state)
+        executor_thread = threading.Thread(target=executor.spin, daemon=True)
+        executor_thread.start()
+
     @property
-    def state(self):
+    def currRPY(self):
         return self.task_state.state
+
+    @property
+    def currXYZ(self):
+        return [0.0, 0.0, self.task_state.depth]
 
     @property
     def cv_data(self):
@@ -43,17 +52,12 @@ class Task(smach.State):
         return self.task_state.get_logger()
 
     @abstractmethod
-    def run(self, ud):
-        # To be overwritten by a subclass
+    def execute(self, blackboard):
+        # To override
         pass
 
-    def execute(self, ud):
-        # Sets initital_state as current task state
-        self.initial_state = self.state
-        return self.run(ud)
-
-    def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ):
-        return self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ)
+    def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None):
+        return self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None)
 
     def task_complete(self):
         self.targetRPY = [0.0, 0.0, 0.0]
@@ -64,69 +68,3 @@ class Task(smach.State):
         self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
 
         return "done"
-
-
-# class ObjectVisibleTask(Task):
-#     def __init__(self, image_name, timeout):
-#         super().__init__(
-#             task_name=image_name,
-#             outcomes=["undetected", "detected"],
-#             input_keys=["image_name"],
-#             output_keys=["image_name"],
-#         )
-
-#         self.image_name = image_name
-#         self.timeout = timeout
-
-#     def run(self, ud):
-#         milli_secs = 10
-#         rate = self.task_state.create_rate(milli_secs)
-#         total = 0
-#         while total < self.timeout * 1000:
-#             if cv_object_position(self.cv_data[self.image_name]) is not None:
-#                 return "detected"
-
-#             total += milli_secs
-#             rate.sleep()
-#         return "undetected"
-
-
-# class MutableTask(Task):
-#     def __init__(self, mutablePose):
-#         super().__init__(
-#             task_name="mutable_task",
-#             outcomes=["done"],
-#             input_keys=["x", "y", "z", "roll", "pitch", "yaw"],
-#         )
-#         # super().__init__(task_name=name, outcomes=['done'], input_keys=['x','y','z','roll','pitch','yaw'])
-#         self.mutablePose = mutablePose
-
-#     def run(self, ud):
-#         if ud.x != nan and ud.y != nan and ud.z != nan:
-#             self.mutablePose.setPoseCoords(ud.x, ud.y, ud.z, ud.roll, ud.pitch, ud.yaw)
-
-#         # Checks if preemption request has been made for current state
-#         # Preemption refers to interuppting execution of current state in favor of another
-#         if self.preempt_requested():
-#             # Perform cleanup and transition to another state
-#             self.service_preempt()
-
-#         return "done"
-
-
-# def cv_object_position(cv_obj_data):
-#     pass
-
-
-"""
-Notes for smach.State:
-outcomes are label for the different possible states for the state machine,
-returned at the end of the execute function
-
-input_keys refers to data fed to the state
-if input_keys=['foo_input'], then it is accessed via ud.foo_input in execute
-
-output_keys are what the state can modify
-if output_keys=['foo_output'], then it is accessed via ud.foo_output in execute
-ud.foo_output = 3
-"""

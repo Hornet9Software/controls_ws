@@ -1,5 +1,6 @@
 import numpy as np
 import rclpy
+import time
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import *
 from controls_core.position_control import PositionControl
@@ -14,9 +15,8 @@ thrustAllocator = ThrustAllocator()
 attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
-targetXYZ = np.array([0, 0, -0.2])
+targetXYZ = np.array([0, 0, -1.2])
 targetRPY = np.array([0, 0, 0])
-
 
 class DepthControlTest(Node):
     def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
@@ -28,6 +28,7 @@ class DepthControlTest(Node):
         self.testRPYControl = testRPYControl
 
         self.create_timer(0.1, self._controlLoop)
+        self.first = True
 
         self.currXYZ = [0.0, 0.0, 0.0]
         self.currRPY = [0.0, 0.0, 0.0]
@@ -40,6 +41,8 @@ class DepthControlTest(Node):
             Imu, "/sensors/imu", self._imuProcessing, 10
         )
 
+        self.init_time = time.time()
+
     def _imuProcessing(self, msg: Imu):
         self.currRPY = [
             msg.roll_pitch_yaw.x,
@@ -51,6 +54,10 @@ class DepthControlTest(Node):
         self.currXYZ[2] = msg.data
 
     def _controlLoop(self):
+        if self.first:
+            self.first = False
+            self.init_time = time.time()
+
         if self.testRPYControl:
             self.currRPY = attitudeControl.correctIMU(self.currRPY)
             angularAcc = attitudeControl.getAttitudeCorrection(
@@ -63,6 +70,18 @@ class DepthControlTest(Node):
         linearAcc = positionControl.getPositionCorrection(
             currXYZ=self.currXYZ, targetXYZ=targetXYZ
         )
+
+        curr_time = time.time()
+        delta_t = curr_time - self.init_time
+
+        if delta_t < 5:
+            linearAcc[1] = 0.0
+        elif delta_t < 5.5:
+            linearAcc[1] = 1.0
+        elif delta_t >= 5.5 and delta_t < 6.0:
+            linearAcc[1] = -1.0
+        else:
+            linearAcc[1] = 0.0
 
         self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
         self.get_logger().info(f"Target Depth: {targetXYZ[2]}")

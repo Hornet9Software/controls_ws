@@ -3,12 +3,12 @@ import math
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, Int32MultiArray
 
 
 class CVControlSignals(Node):
-    OBJECTS = ["gate"]
-    OBJECT_DIMENSIONS = {"gate": (1.5, 1.0)}
+    OBJECTS = ["orange_flare"]
+    OBJECT_DIMENSIONS = {"orange_flare": (0.15, 1.5)}
 
     def __init__(self):
         super().__init__("cv_control_signals_processor")
@@ -22,19 +22,23 @@ class CVControlSignals(Node):
         - Camera matrix
         -
         """
-        self.IMAGE_WIDTH_PIXELS = 1.0
-        self.IMAGE_HEIGHT_PIXELS = 1.0
+        self.IMAGE_WIDTH_PIXELS = 640
+        self.IMAGE_HEIGHT_PIXELS = 480
+        self.HFOV = math.radians(46)
+        self.VFOV = math.radians(34)
         self.IMAGE_CENTROID = (
             self.IMAGE_WIDTH_PIXELS / 2.0,
             self.IMAGE_HEIGHT_PIXELS / 2.0,
         )
-        self.HFOV = math.radians(50.7)
-        self.VFOV = math.radians(37.7)
 
         for objectName in self.OBJECTS:
             self.listeners[objectName] = self.create_subscription(
-                Float32MultiArray,
-                "/left/yolo/box" if objectName == "gate" else "/object/"+objectName+"/yolo",
+                Int32MultiArray,
+                (
+                    "/left/yolo/box"
+                    if objectName == "gate"
+                    else "/object/" + objectName + "/box"
+                ),
                 lambda msg: self._onReceiveYOLO(objectName, msg),
                 10,
             )

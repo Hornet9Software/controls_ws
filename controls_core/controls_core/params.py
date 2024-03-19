@@ -2,7 +2,7 @@ from controls_core.PID import PID
 
 rollPID = PID(Kp=25.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 pitchPID = PID(Kp=25.0, Ki=0.0, Kd=10.0, sample_time=0.1)
-yawPID = PID(Kp=5.0, Ki=0.0, Kd=1.0, sample_time=0.1)
+yawPID = PID(Kp=25.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 cameraSteerPID = PID(Kp=7.0, Ki=0.0, Kd=1.0, sample_time=0.1)
 
 # pitchPID = PID(Kp=0.0, Ki=0.0, Kd=0.0, sample_time=0.1)
@@ -12,7 +12,7 @@ lateralPID = PID(Kp=-5.0, Ki=0.0, Kd=-5.0, sample_time=0.1)
 depthPID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 
 UPTHRUST = 1
-IMU_ZERO = [-0.03480778207369386, -0.083629260216830133, 1.49]
+IMU_ZERO = [-0.0691, -0.0824, 1.4872]
 
 left_cam_dev = "/dev/video0"
 bottom_cam_dev = "/dev/video2"
