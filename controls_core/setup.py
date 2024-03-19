@@ -36,7 +36,7 @@ setup(
             "imu_zeroing = controls_core.imu_zeroing:main",
             "teleop = controls_core.teleop:main",
             "pass_through_gate_test = controls_core.pass_through_gate_test:main",
-            "knock_down_flare_test = controls_core.knock_down_flare_test:main"
+            "knock_down_flare_test = controls_core.knock_down_flare_test:main",
             "obstacle_avoidance = controls_core.obstacle_avoidance_test:main",
         ],
     },

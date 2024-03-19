@@ -52,7 +52,9 @@ class ChaseObjectNode(Node):
         self.object_listener = self.create_subscription(
             Float32MultiArray,
             f"/object/{self.chase_object_params.object_name}/bearing_lateral_distance",
-            lambda msg: self._on_receive_cv_data(msg, "gate"),
+            lambda msg: self._on_receive_cv_data(
+                msg, self.chase_object_params.object_name
+            ),
             10,
         )
 
