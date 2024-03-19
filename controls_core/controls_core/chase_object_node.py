@@ -1,5 +1,4 @@
 import numpy as np
-import rclpy
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import *
 from controls_core.position_control import PositionControl
@@ -14,17 +13,27 @@ thrustAllocator = ThrustAllocator()
 attitudeControl = AttitudeControl(rollPID, pitchPID, cameraSteerPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
-targetXYZ = np.array([0, 0, -1.2])
-targetRPY = [0, 0, 0]
+
+class ChaseObjectParams:
+    def __init__(self, object_name, threshold_dist, linear_acc) -> None:
+        self.object_name = object_name
+        self.threshold_dist = threshold_dist
+        self.linear_acc = linear_acc
 
 
-class RotateToGateTest(Node):
-    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
+class ChaseObjectNode(Node):
+    def __init__(
+        self,
+        targetXYZ,
+        targetRPY,
+        chase_object_params: ChaseObjectParams,
+        testRPYControl=False,
+    ):
         super().__init__("depth_control_test")
 
         self.targetXYZ = targetXYZ
         self.targetRPY = targetRPY
-
+        self.chase_object_params = chase_object_params
         self.testRPYControl = testRPYControl
 
         self.create_timer(0.1, self._controlLoop)
@@ -40,14 +49,14 @@ class RotateToGateTest(Node):
             Imu, "/sensors/imu/corrected", self._imuProcessing, 10
         )
 
-        self.gate_listener = self.create_subscription(
+        self.object_listener = self.create_subscription(
             Float32MultiArray,
-            "/object/gate/bearing_lateral_distance",
+            f"/object/{self.chase_object_params.object_name}/bearing_lateral_distance",
             lambda msg: self._on_receive_cv_data(msg, "gate"),
             10,
         )
 
-        self.cv_data = {"gate": {}}
+        self.cv_data = {self.chase_object_params.object_name: {}}
 
     def _on_receive_cv_data(self, msg: Float32MultiArray, objectName):
         msgData = np.array(msg.data).tolist()
@@ -81,22 +90,22 @@ class RotateToGateTest(Node):
             angularAcc = [0.0, 0.0, 0.0]
 
         linearAcc = positionControl.getPositionCorrection(
-            currXYZ=self.currXYZ, targetXYZ=targetXYZ
+            currXYZ=self.currXYZ, targetXYZ=self.targetXYZ
         )
 
         if (
             abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
             < 0.10
-            or self.cv_data["gate"]["distance"] < 1
+            or self.cv_data[self.chase_object_params.object_name]["distance"] < 1
         ):
             linearAcc[1] = 1.5
-            # self.get_logger().info(f"Stopped")
+            self.get_logger().info(f"Stopped")
         else:
             linearAcc[1] = 0.0
-            # self.get_logger().info(f"Moving")
+            self.get_logger().info(f"Moving")
 
-        # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
-        # self.get_logger().info(f"Target Depth: {targetXYZ[2]}")
+        self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
+        self.get_logger().info(f"Target Depth: {self.targetXYZ[2]}")
         self.get_logger().info(
             f"Target RPY: {self.targetRPY}, Curr RPY: {self.currRPY}"
         )
@@ -105,15 +114,3 @@ class RotateToGateTest(Node):
         # FL-FR-ML-MR-RL-RR
         thrustValues = thrustAllocator.getThrustPWMs(linearAcc, angularAcc)
         thrusterControl.setThrusters(thrustValues=thrustValues)
-
-
-def main(args=None):
-    rclpy.init(args=args)
-    depthTest = RotateToGateTest(testRPYControl=True)
-
-    try:
-        rclpy.spin(depthTest)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        thrusterControl.killThrusters()
-    finally:
-        rclpy.try_shutdown()
