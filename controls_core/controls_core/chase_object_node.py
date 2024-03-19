@@ -93,23 +93,30 @@ class ChaseObjectNode(Node):
             currXYZ=self.currXYZ, targetXYZ=self.targetXYZ
         )
 
-        if (
-            abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
-            < 0.10
-            or self.cv_data[self.chase_object_params.object_name]["distance"] < 1
-        ):
-            linearAcc[1] = 1.5
-            self.get_logger().info(f"Stopped")
-        else:
-            linearAcc[1] = 0.0
-            self.get_logger().info(f"Moving")
+        # CV Control
+        obj_data = self.cv_data[self.chase_object_params.object_name]
 
-        self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
-        self.get_logger().info(f"Target Depth: {self.targetXYZ[2]}")
-        self.get_logger().info(
-            f"Target RPY: {self.targetRPY}, Curr RPY: {self.currRPY}"
-        )
-        self.get_logger().info(f"Correction: {linearAcc}")
+        if obj_data:
+            curr_dist = obj_data["distance"]
+            self.get_logger().info(f"Curr Distance: {curr_dist}")
+
+            if (
+                abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
+                < 0.10
+                or curr_dist < 1
+            ):
+                linearAcc[1] = 1.5
+                self.get_logger().info(f"Stopped")
+            else:
+                linearAcc[1] = 0.0
+                self.get_logger().info(f"Moving")
+
+            # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
+            # self.get_logger().info(f"Target Depth: {self.targetXYZ[2]}")
+            # self.get_logger().info(
+            #     f"Target RPY: {self.targetRPY}, Curr RPY: {self.currRPY}"
+            # )
+            # self.get_logger().info(f"Correction: {linearAcc}")
 
         # FL-FR-ML-MR-RL-RR
         thrustValues = thrustAllocator.getThrustPWMs(linearAcc, angularAcc)
