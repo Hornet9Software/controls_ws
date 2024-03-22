@@ -1,10 +1,13 @@
 import time
 
+import numpy as np
 import rclpy
+
 from simple_node import Node
 from tasks.movement_tasks import *
 from yasmin import StateMachine
-from yasmin_viewer import YasminViewerPub
+
+# from yasmin.yasmin_viewer import YasminViewerPub
 
 
 class SM(Node):
@@ -13,20 +16,66 @@ class SM(Node):
 
         sm = StateMachine(outcomes=["finish"])
 
+        # sm.add_state(
+        #     "HOLD",
+        #     HoldForTime(
+        #         outcomes=["done"],
+        #         time_to_hold=60,
+        #         target_depth=-1.2,
+        #         targetRPY=[0.0, 0.0, 0.0],
+        #     ),
+        #     transitions={"done": "finish"},
+        # )
+
+        # sm.add_state(
+        #     "MOVE_TO_GATE",
+        #     MoveToObject(
+        #         outcomes=["done"],
+        #         object_name="red_flare",
+        #         target_depth=-1.0,
+        #         targetRPY=[0.0, 0.0, 0.0],
+        #     ),
+        #     transitions={"done": "finish"},
+        # )
+
         sm.add_state(
-            "HOLD",
-            HoldForTime(
+            "MOVE1",
+            MoveDistance(
                 outcomes=["done"],
-                time_to_hold=20,
-                target_depth=-1.2,
-                targetRPY=[0.0, 0.0, 0.0],
+                distance=7,
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, 1.3 + np.radians(50)],
+                eqm_time=10
+            ),
+            transitions={"done": "MOVE2"},
+        )
+
+        sm.add_state(
+            "MOVE2",
+            MoveDistance(
+                outcomes=["done"],
+                distance=2,
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, 1.3],
+                eqm_time=10
+            ),
+            transitions={"done": "MOVE_TO_GATE"},
+        )
+
+        sm.add_state(
+            "MOVE_TO_GATE",
+            MoveToObject(
+                outcomes=["done"],
+                object_name="gate",
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, 1.3],
             ),
             transitions={"done": "finish"},
         )
 
         outcome = sm()
 
-        YasminViewerPub(self, "HORNET", sm)
+        # YasminViewerPub(self, "HORNET", sm)
         print(outcome)
 
 

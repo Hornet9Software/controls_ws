@@ -2,8 +2,9 @@ import threading
 from abc import abstractmethod
 
 import rclpy
-from controls_core.PIDManager import PIDManager
 from dependency_injector import providers
+
+from controls_core.PIDManager import PIDManager
 from tasks.task_state import TaskState
 from yasmin import State
 
@@ -16,19 +17,24 @@ class Task(State):
 
         super().__init__(outcomes)
 
-        self.task_state = self.task_state_provider()
-        self.pid_manager = self.pid_manager_provider()
+        self.task_state = self.TASK_STATE_PROVIDER()
+        self.pid_manager = self.PID_MANAGER_PROVIDER()
         self.start_time = None
         self.initial_state = None
         self.output = {}
+        
+        # self.state_listener = 
 
     @classmethod
     def init_task_state(cls):
-        rclpy.init()
         task_state = cls.TASK_STATE_PROVIDER()
-        executor = rclpy.executors.MultiThreadedExecutor()
-        executor.add_node(task_state)
-        executor_thread = threading.Thread(target=executor.spin, daemon=True)
+        # executor = rclpy.executors.MultiThreadedExecutor()
+        # executor.add_node(task_state)
+        # executor_thread = threading.Thread(target=executor.spin, daemon=True)
+
+        executor_thread = threading.Thread(
+            target=rclpy.spin, args=(task_state,), daemon=True
+        )
         executor_thread.start()
 
     @property
@@ -52,12 +58,21 @@ class Task(State):
         return self.task_state.get_logger()
 
     @abstractmethod
-    def execute(self, blackboard):
-        # To override
+    def run(self, blackboard):
         pass
 
-    def correctVehicle(self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None):
-        return self.pid_manager.correctVehicle(currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None)
+    def execute(self, blackboard):
+        while True:
+            out = self.run(blackboard)
+            if out != "running":
+                return out
+
+    def correctVehicle(
+        self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None
+    ):
+        return self.pid_manager.correctVehicle(
+            currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
+        )
 
     def task_complete(self):
         self.targetRPY = [0.0, 0.0, 0.0]

@@ -1,12 +1,13 @@
 import numpy as np
-from controls_core.attitude_control import AttitudeControl
-from controls_core.params import *
-from controls_core.position_control import PositionControl
-from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
 from thrusters.thrusters import ThrusterControl
+
+from controls_core.attitude_control import AttitudeControl
+from controls_core.params import *
+from controls_core.position_control import PositionControl
+from controls_core.thruster_allocator import ThrustAllocator
 
 thrusterControl = ThrusterControl()
 thrustAllocator = ThrustAllocator()
@@ -67,8 +68,8 @@ class ChaseObjectNode(Node):
         self.cv_data[objectName]["distance"] = msgData[2]
 
         self.targetRPY[2] = msgData[0]
-        self.get_logger().info(self.cv_data.__repr__())
-        self.get_logger().info(f"Target RPY changed to {self.targetRPY}")
+        # self.get_logger().info(self.cv_data.__repr__())
+        # self.get_logger().info(f"Target RPY changed to {self.targetRPY}")
 
     def _imuProcessing(self, msg: Imu):
         self.currRPY = [
@@ -87,7 +88,7 @@ class ChaseObjectNode(Node):
             angularAcc = attitudeControl.getAttitudeCorrection(
                 currRPY=self.currRPY, targetRPY=self.targetRPY
             )
-            self.get_logger().info(f"PID angular acceleration: {angularAcc}")
+            # self.get_logger().info(f"PID angular acceleration: {angularAcc}")
         else:
             angularAcc = [0.0, 0.0, 0.0]
 
@@ -105,13 +106,18 @@ class ChaseObjectNode(Node):
             if (
                 abs(attitudeControl.getAngleError(self.currRPY[2], self.targetRPY[2]))
                 < 0.10
-                or curr_dist < 1
+                or curr_dist < self.chase_object_params.threshold_dist
             ):
-                linearAcc[1] = 1.5
-                self.get_logger().info(f"Stopped")
+
+                linearAcc[1] = self.chase_object_params.linear_acc
+
+                if curr_dist < self.chase_object_params.threshold_dist:
+                    angularAcc[2] = 0.0
+
+                # self.get_logger().info(f"Moving")
             else:
                 linearAcc[1] = 0.0
-                self.get_logger().info(f"Moving")
+                # self.get_logger().info(f"Stopped")
 
             # self.get_logger().info(f"Curr Depth: {self.currXYZ[2]}")
             # self.get_logger().info(f"Target Depth: {self.targetXYZ[2]}")

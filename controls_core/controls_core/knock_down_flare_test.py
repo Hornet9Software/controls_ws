@@ -6,11 +6,13 @@ from thrusters.thrusters import ThrusterControl
 
 thrusterControl = ThrusterControl()
 
-targetXYZ = np.array([0, 0, -1.2])
+targetXYZ = np.array([0, 0, -1.5])
 targetRPY = [0, 0, 0]
 
 gate_params = ChaseObjectParams(
-    object_name="red_flare", threshold_dist=1.5, linear_acc=1.0
+    object_name="yellow_flare",  # was red
+    threshold_dist=1.5,
+    linear_acc=1.0,
 )
 
 
