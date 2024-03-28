@@ -1,4 +1,5 @@
 import time
+from copy import copy, deepcopy
 
 from tasks.task import Task
 
@@ -18,7 +19,7 @@ class HoldForTime(Task):
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
 
-    def execute(self, blackboard):
+    def run(self, blackboard):
         self.curr_time = time.time()
         if self.curr_time - self.init_time > self.time_to_hold:
             return "done"
@@ -26,6 +27,8 @@ class HoldForTime(Task):
         self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
 
         time.sleep(0.1)
+
+        return "running"
 
 
 class MoveDistance(Task):
@@ -35,6 +38,7 @@ class MoveDistance(Task):
         distance=5,
         target_depth=-1.2,
         targetRPY=[0, 0, 0],
+        eqm_time = 30
     ):
         super().__init__(outcomes)
 
@@ -42,8 +46,9 @@ class MoveDistance(Task):
         self.first = True
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
+        self.eqm_time = eqm_time
 
-    def execute(self, blackboard):
+    def run(self, blackboard):
         if self.first:
             self.init_time = time.time()
             self.first = False
@@ -51,14 +56,13 @@ class MoveDistance(Task):
         self.curr_time = time.time()
         delta_t = self.curr_time - self.init_time
 
-        eqm_time = 3
         forward_time = 1.675 * self.distance - 1.0722
 
-        if delta_t < eqm_time:
+        if delta_t < self.eqm_time:
             self.correctVehicle(
                 self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
             )
-        elif delta_t >= eqm_time and delta_t < eqm_time + forward_time:
+        elif delta_t >= self.eqm_time and delta_t < self.eqm_time + forward_time:
             self.correctVehicle(
                 self.currRPY,
                 self.targetRPY,
@@ -67,8 +71,8 @@ class MoveDistance(Task):
                 override_forward_acceleration=3.0,
             )
         elif (
-            delta_t >= eqm_time + forward_time
-            and delta_t <= 2 * eqm_time + forward_time
+            delta_t >= self.eqm_time + forward_time
+            and delta_t <= 2 * self.eqm_time + forward_time
         ):
             self.correctVehicle(
                 self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
@@ -77,6 +81,8 @@ class MoveDistance(Task):
             return "done"
 
         time.sleep(0.1)
+
+        return "running"
 
 
 class MoveToObject(Task):
@@ -94,36 +100,42 @@ class MoveToObject(Task):
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
 
-        self.currXYZ = [0, 0, self.depth]
-        self.currRPY = self.state
-
-    def execute(self, blackboard):
-        angle_step = 0.5
+    def run(self, blackboard):
+        angle_step = 0.0
 
         if self.cv_data[self.object_name] is None:
-            self.targetRPY[2] += 0.5
+            self.targetRPY[2] += angle_step
             self.correctVehicle(
                 self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
             )
         else:
-            self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+            while True:
+                print("DETECTED!")
+                self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+                currRPY = copy(self.currRPY)
+                currRPY[2] = 0.0
 
-            if self.cv_data[self.object_name]["distance"] > 0.5:
-                self.correctVehicle(
-                    self.currRPY,
-                    self.targetRPY,
-                    self.currXYZ,
-                    self.targetXYZ,
-                    override_forward_acceleration=3.0,
-                )
-            else:
-                self.correctVehicle(
-                    self.currRPY,
-                    self.targetRPY,
-                    self.currXYZ,
-                    self.targetXYZ,
-                    override_forward_acceleration=0.5,
-                )
-                return "done"
+                if (
+                    abs(self.targetRPY[2] - self.currRPY[2]) < 0.2
+                    or self.cv_data[self.object_name]["distance"] < 1
+                ):
+                    self.correctVehicle(
+                        currRPY,
+                        self.targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                        override_forward_acceleration=1.0,
+                    )
+                else:
+                    self.correctVehicle(
+                        currRPY,
+                        self.targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                    )
+
+                time.sleep(0.1)
 
         time.sleep(0.1)
+
+        return "running"

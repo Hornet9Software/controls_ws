@@ -14,12 +14,12 @@ thrustAllocator = ThrustAllocator()
 attitudeControl = AttitudeControl(rollPID, pitchPID, yawPID)
 positionControl = PositionControl(distancePID, lateralPID, depthPID)
 
-targetXYZ = np.array([0, 0, -0.2])
-targetRPY = np.array([0, 0, 0])
+targetXYZ = np.array([0, 0, -0.4])
+targetRPY = np.array([np.radians(-5), 0, np.radians(50)])
 
 
 class DepthControlTest(Node):
-    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=False):
+    def __init__(self, targetXYZ=targetXYZ, targetRPY=targetRPY, testRPYControl=True):
         super().__init__("depth_control_test")
 
         self.targetXYZ = targetXYZ
@@ -37,7 +37,7 @@ class DepthControlTest(Node):
         )
 
         self.imuListener = self.create_subscription(
-            Imu, "/sensors/imu", self._imuProcessing, 10
+            Imu, "/sensors/imu/corrected", self._imuProcessing, 10
         )
 
     def _imuProcessing(self, msg: Imu):

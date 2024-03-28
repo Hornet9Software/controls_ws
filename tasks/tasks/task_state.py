@@ -2,10 +2,11 @@ import threading
 
 import numpy as np
 import rclpy
-from custom_msgs.msg import Correction, State
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
+
+from custom_msgs.msg import Correction, State
 
 
 class TaskState(Node):
@@ -38,20 +39,67 @@ class TaskState(Node):
             Correction, self.CORRECTION_TOPIC, 10
         )
 
-        self.depth = None
-        self.state = None
+        self.depth = -1.0
+        self.state = [0.0, 0.0, 0.0]
 
         self.cv_listeners = {}
         self.cv_data = {}
-        for objectName in self.CV_OBJECTS:
-            self.cv_data[objectName] = None
-            topic = "/object/" + objectName + "/bearing_lateral_distance"
-            self.cv_listeners[objectName] = self.create_subscription(
-                Float32MultiArray,
-                topic,
-                lambda msg: self._on_receive_cv_data(msg, objectName),
-                10,
-            )
+
+        self.cv_data["gate"] = None
+        self.gate_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/gate/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "gate"),
+            100,
+        )
+
+        self.cv_data["orange_flare"] = None
+        self.orange_flare_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/orange_flare/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "orange_flare"),
+            100,
+        )
+
+        self.cv_data["blue_flare"] = None
+        self.blue_flare_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/blue_flare/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "blue_flare"),
+            100,
+        )
+
+        self.cv_data["red_flare"] = None
+        self.red_flare_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/red_flare/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "red_flare"),
+            100,
+        )
+
+        self.cv_data["yellow_flare"] = None
+        self.yellow_flare_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/yellow_flare/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "yellow_flare"),
+            100,
+        )
+
+        self.cv_data["blue_drum"] = None
+        self.blue_drum_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/blue_drum/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "blue_drum"),
+            100,
+        )
+
+        self.cv_data["red_drum"] = None
+        self.red_drum_listener = self.create_subscription(
+            Float32MultiArray,
+            "/object/red_drum/bearing_lateral_distance",
+            lambda msg: self._on_receive_cv_data(msg, "red_drum"),
+            100,
+        )
 
     @classmethod
     def create_task_state(cls, task_name):
@@ -76,4 +124,4 @@ class TaskState(Node):
         self.cv_data[objectName]["lateral"] = msgData[1]
         self.cv_data[objectName]["distance"] = msgData[2]
 
-        self.get_logger().info(self.cv_data.__repr__())
+        # self.get_logger().info(self.cv_data.__repr__())

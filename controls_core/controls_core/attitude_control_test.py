@@ -1,6 +1,6 @@
 import numpy as np
 import rclpy
-from controls_core.driver import AttitudeControl
+from controls_core.attitude_control import AttitudeControl
 from controls_core.params import *
 from controls_core.thruster_allocator import ThrustAllocator
 from imu_msg.msg import Imu

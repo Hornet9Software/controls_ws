@@ -1,6 +1,7 @@
+import math
+
 import numpy as np
 import rclpy
-import math
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
@@ -21,11 +22,11 @@ class ObstacleAvoidanceTest(Node):
     def __init__(
         self,
         targetXYZ=[0.0, 0.0, -1.2],
-        objectName="gate",
-        x_power=-2,
-        y_power=-1,
-        x_fac=0,
-        y_fac=0
+        objectName="orange_flare",
+        x_power=-1, # this was -1
+        y_power=-1, # this was -1
+        x_fac=0.1, #this was 1.0
+        y_fac=0.1, # this was 1.0
     ):
         super().__init__("obstacle_avoidance_test")
 
@@ -53,7 +54,9 @@ class ObstacleAvoidanceTest(Node):
             10,
         )
 
-        self.cv_data = {self.objectName: {"bearing": 0.0, "lateral": 0.0, "distance": 0.0}}
+        self.cv_data = {
+            self.objectName: {"bearing": 0.0, "lateral": 0.0, "distance": 0.0}
+        }
 
         self.create_timer(0.1, self._controlLoop)
 
@@ -83,13 +86,13 @@ class ObstacleAvoidanceTest(Node):
 
         sgn_theta = np.sign(theta)
         theta = np.abs(theta)
-        
+
         x_repulsion = self.x_fac * ((d * np.sin(theta)) ** self.x_power) * sgn_theta
         y_repulsion = self.y_fac * ((d * np.cos(theta)) ** self.y_power) * -1.0
 
-        x_repulsion = 0.0 if math.isnan(x_repulsion) else x_repulsion
-        y_repulsion = 0.0 if math.isnan(y_repulsion) else y_repulsion
-            
+        x_repulsion = 0.0 if math.isnan(x_repulsion) or abs(x_repulsion) == float('inf') else x_repulsion
+        y_repulsion = 0.0 if math.isnan(y_repulsion) or abs(y_repulsion) == float('inf') else y_repulsion
+
         self.targetXYZ[0] = x_repulsion
         self.targetXYZ[1] = y_repulsion
 

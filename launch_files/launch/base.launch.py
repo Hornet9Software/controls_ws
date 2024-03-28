@@ -31,7 +31,7 @@ def generate_launch_description():
 
     cv_signals = Node(package="control_signals", executable="cv_signals")
 
-    imu_signals = Node(package="control_signals", executable="imu_signals")
+    # imu_signals = Node(package="control_signals", executable="imu_signals")
 
     # Launch Foxglove Studio to monitor data
     # foxglove_studio = ExecuteProcess(cmd=["foxglove-studio"])
@@ -39,7 +39,7 @@ def generate_launch_description():
     # Add the nodes and the process to the LaunchDescription list
     ld = [
         cv_signals,
-        imu_signals,
+        # imu_signals,
     ]
     # foxglove_studio]
 
