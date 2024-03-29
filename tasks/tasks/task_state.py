@@ -2,11 +2,10 @@ import threading
 
 import numpy as np
 import rclpy
+from custom_msgs.msg import Correction, State
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray
-
-from custom_msgs.msg import Correction, State
 
 
 class TaskState(Node):
@@ -116,6 +115,17 @@ class TaskState(Node):
 
     def _on_receive_depth(self, msg):
         self.depth = msg.data
+
+    def clear_cv_data(self):
+        self.cv_data = {
+            "gate": None,
+            "orange_flare": None,
+            "blue_flare": None,
+            "red_flare": None,
+            "yellow_flare": None,
+            "blue_drum": None,
+            "red_drum": None,
+        }
 
     def _on_receive_cv_data(self, msg, objectName):
         msgData = np.array(msg.data).tolist()

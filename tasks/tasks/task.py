@@ -2,9 +2,8 @@ import threading
 from abc import abstractmethod
 
 import rclpy
-from dependency_injector import providers
-
 from controls_core.PIDManager import PIDManager
+from dependency_injector import providers
 from tasks.task_state import TaskState
 from yasmin import State
 
@@ -22,8 +21,6 @@ class Task(State):
         self.start_time = None
         self.initial_state = None
         self.output = {}
-        
-        # self.state_listener = 
 
     @classmethod
     def init_task_state(cls):
@@ -66,6 +63,9 @@ class Task(State):
             out = self.run(blackboard)
             if out != "running":
                 return out
+
+    def clear_cv_data(self):
+        self.task_state.clear_cv_data()
 
     def correctVehicle(
         self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None

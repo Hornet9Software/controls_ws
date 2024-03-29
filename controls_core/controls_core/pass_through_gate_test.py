@@ -9,7 +9,7 @@ thrusterControl = ThrusterControl()
 targetXYZ = np.array([0, 0, -1.0])
 targetRPY = [0, 0, 0]
 
-gate_params = ChaseObjectParams(object_name="gate", threshold_dist=2.0, linear_acc=1.5)
+gate_params = ChaseObjectParams(object_name="gate", threshold_dist=1.0, linear_acc=1.5)
 
 
 def main(args=None):

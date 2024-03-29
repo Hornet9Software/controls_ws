@@ -1,6 +1,8 @@
 import time
 from copy import copy, deepcopy
 
+import numpy as np
+from controls_core.params import angle_abs_error
 from tasks.task import Task
 
 
@@ -38,7 +40,7 @@ class MoveDistance(Task):
         distance=5,
         target_depth=-1.2,
         targetRPY=[0, 0, 0],
-        eqm_time = 30
+        eqm_time=30,
     ):
         super().__init__(outcomes)
 
@@ -91,50 +93,82 @@ class MoveToObject(Task):
         outcomes=["done"],
         object_name="gate",
         target_depth=-1.2,
+        distance_threshold=2,
         targetRPY=[0, 0, 0],
     ):
         super().__init__(outcomes)
 
         self.object_name = object_name
 
+        self.distance_threshold = distance_threshold
+
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
 
+        self.run_before = False
+
+        self.angle_step = 0.01
+        self.total_angle = 0.0
+
+        self.control_loop_count = 0
+
     def run(self, blackboard):
-        angle_step = 0.0
+        self.control_loop_count += 1
+        if self.control_loop_count % 10 == 0:
+            self.clear_cv_data()
+
+        if self.run_before == False:
+            self.init_yaw = self.targetRPY[2]
+            self.run_before = True
 
         if self.cv_data[self.object_name] is None:
-            self.targetRPY[2] += angle_step
+            print("NOT DETECTED")
+            self.targetRPY[2] = self.init_yaw + (
+                np.radians(45) * np.sin(self.total_angle)
+            )
+            self.total_angle += self.angle_step
             self.correctVehicle(
                 self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
             )
+
+            time.sleep(0.1)
+
+            return "running"
+
+        print("DETECTED!")
+        self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+        currRPY = copy(self.currRPY)
+        currRPY[2] = 0.0
+
+        if (
+            angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.1
+            or self.cv_data[self.object_name]["distance"] < self.distance_threshold
+        ):
+            if self.cv_data[self.object_name]["distance"] < self.distance_threshold:
+                # set yaw angular acceleration to 0
+                targetRPY = [0, 0, 0]
+                self.correctVehicle(
+                    currRPY,
+                    targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    override_forward_acceleration=2.0,
+                )
+            else:
+                self.correctVehicle(
+                    currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    override_forward_acceleration=2.0,
+                )
         else:
-            while True:
-                print("DETECTED!")
-                self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
-                currRPY = copy(self.currRPY)
-                currRPY[2] = 0.0
-
-                if (
-                    abs(self.targetRPY[2] - self.currRPY[2]) < 0.2
-                    or self.cv_data[self.object_name]["distance"] < 1
-                ):
-                    self.correctVehicle(
-                        currRPY,
-                        self.targetRPY,
-                        self.currXYZ,
-                        self.targetXYZ,
-                        override_forward_acceleration=1.0,
-                    )
-                else:
-                    self.correctVehicle(
-                        currRPY,
-                        self.targetRPY,
-                        self.currXYZ,
-                        self.targetXYZ,
-                    )
-
-                time.sleep(0.1)
+            self.correctVehicle(
+                currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+            )
 
         time.sleep(0.1)
 

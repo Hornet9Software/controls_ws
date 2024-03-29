@@ -35,8 +35,8 @@ class CVControlSignals(Node):
     IMAGE_HEIGHT_PIXELS = 480
     IMAGE_CENTROID = (IMAGE_HEIGHT_PIXELS / 2.0, IMAGE_HEIGHT_PIXELS / 2.0)
     QUEUE_SIZE = 10
-    HFOV = math.radians(46)
-    VFOV = math.radians(34)
+    HFOV = math.radians(51.96292634)
+    VFOV = math.radians(40.98386431)
 
     def __init__(self):
         super().__init__("cv_control_signals_processor")
