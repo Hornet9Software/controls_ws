@@ -95,36 +95,37 @@ class MoveToObject(Task):
         target_depth=-1.2,
         distance_threshold=2,
         targetRPY=[0, 0, 0],
+        completion_time_threshold=3.0,
     ):
         super().__init__(outcomes)
 
         self.object_name = object_name
 
-        self.distance_threshold = distance_threshold
-
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
 
-        self.run_before = False
+        self.distance_threshold = distance_threshold
+
+        self.completion_time_threshold = completion_time_threshold
+
+        self.centre_yaw = self.targetRPY[2]
 
         self.angle_step = 0.01
         self.total_angle = 0.0
-
-        self.control_loop_count = 0
+        self.sweeping_angle = np.radians(45)
 
     def run(self, blackboard):
-        self.control_loop_count += 1
-        if self.control_loop_count % 10 == 0:
-            self.clear_cv_data()
 
-        if self.run_before == False:
-            self.init_yaw = self.targetRPY[2]
-            self.run_before = True
+        self.clear_old_cv_data(self.object_name, refresh_time=1.0)
 
         if self.cv_data[self.object_name] is None:
+            curr_time = time.time()
+            if (curr_time - self.last_detected_time) >= self.completion_time_threshold:
+                return "done"
+
             print("NOT DETECTED")
-            self.targetRPY[2] = self.init_yaw + (
-                np.radians(45) * np.sin(self.total_angle)
+            self.targetRPY[2] = self.centre_yaw + (
+                self.sweeping_angle * np.sin(self.total_angle)
             )
             self.total_angle += self.angle_step
             self.correctVehicle(
@@ -137,6 +138,12 @@ class MoveToObject(Task):
 
         print("DETECTED!")
         self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+        self.last_detetcted_time = self.cv_data[self.object_name]["time"]
+
+        # Reset sweeping parameters
+        self.centre_yaw = self.targetRPY[2]
+        self.total_angle = 0.0
+
         currRPY = copy(self.currRPY)
         currRPY[2] = 0.0
 

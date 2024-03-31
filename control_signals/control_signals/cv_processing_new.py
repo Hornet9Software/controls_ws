@@ -1,4 +1,5 @@
 import math
+import time
 
 import cv2
 import cv_bridge
@@ -81,6 +82,8 @@ class CVControlSignals(Node):
             y_min = y_centre - h / 2.0
             y_max = y_centre + h / 2.0
 
+            curr_time = time.time()
+
             self.get_logger().info(
                 "{} XMIN XMAX YMIN YMAX: {}, {}, {}, {}".format(
                     object_name, x_min, x_max, y_min, y_max
@@ -121,7 +124,7 @@ class CVControlSignals(Node):
             lateral = math.acos(min(projected_width, object_width) / object_width)
 
             out_msg = Float32MultiArray()
-            out_msg.data = [bearing, lateral, distance]
+            out_msg.data = [curr_time, bearing, lateral, distance]
             self.object_publishers[object_name].publish(out_msg)
 
 

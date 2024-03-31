@@ -72,6 +72,7 @@ class SM(Node):
                 target_depth=-1.0,
                 distance_threshold=1.5,
                 targetRPY=[0.0, 0.0, 0.0],
+                completion_time_threshold=3.0,
             ),
             transitions={"done": "finish"},
         )

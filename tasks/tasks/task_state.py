@@ -100,10 +100,6 @@ class TaskState(Node):
             100,
         )
 
-    @classmethod
-    def create_task_state(cls, task_name):
-        return cls(task_name)
-
     def stop_spinning(self):
         self.destroy_node()
 
@@ -116,22 +112,15 @@ class TaskState(Node):
     def _on_receive_depth(self, msg):
         self.depth = msg.data
 
-    def clear_cv_data(self):
-        self.cv_data = {
-            "gate": None,
-            "orange_flare": None,
-            "blue_flare": None,
-            "red_flare": None,
-            "yellow_flare": None,
-            "blue_drum": None,
-            "red_drum": None,
-        }
+    def clear_cv_data(self, object_name):
+        self.cv_data[object_name] = None
 
     def _on_receive_cv_data(self, msg, objectName):
         msgData = np.array(msg.data).tolist()
         self.cv_data[objectName] = {}
-        self.cv_data[objectName]["bearing"] = msgData[0]
-        self.cv_data[objectName]["lateral"] = msgData[1]
-        self.cv_data[objectName]["distance"] = msgData[2]
+        self.cv_data[objectName]["time"] = msgData[0]
+        self.cv_data[objectName]["bearing"] = msgData[1]
+        self.cv_data[objectName]["lateral"] = msgData[2]
+        self.cv_data[objectName]["distance"] = msgData[3]
 
         # self.get_logger().info(self.cv_data.__repr__())

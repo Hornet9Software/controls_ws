@@ -1,4 +1,5 @@
 import threading
+import time
 from abc import abstractmethod
 
 import rclpy
@@ -60,12 +61,20 @@ class Task(State):
 
     def execute(self, blackboard):
         while True:
+
             out = self.run(blackboard)
             if out != "running":
                 return out
 
-    def clear_cv_data(self):
-        self.task_state.clear_cv_data()
+    def clear_old_cv_data(self, object_name, refresh_time=1.0):
+        if self.cv_data[object_name] is None:
+            return
+
+        msg_time = self.cv_data[object_name]["time"]
+        curr_time = time.time()
+
+        if (curr_time - msg_time) >= refresh_time:
+            self.task_state.clear_cv_data(object_name)
 
     def correctVehicle(
         self, currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration=None
@@ -74,12 +83,12 @@ class Task(State):
             currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
         )
 
-    def task_complete(self):
-        self.targetRPY = [0.0, 0.0, 0.0]
-        self.targetXYZ = [0.0, 0.0, 0.0]
-        self.currRPY = [0.0, 0.0, 0.0]
-        self.currentXYZ = [0.0, 0.0, 0.0]
-        self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
-        self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
+    # def task_complete(self):
+    #     self.targetRPY = [0.0, 0.0, 0.0]
+    #     self.targetXYZ = [0.0, 0.0, 0.0]
+    #     self.currRPY = [0.0, 0.0, 0.0]
+    #     self.currentXYZ = [0.0, 0.0, 0.0]
+    #     self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
+    #     self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
 
-        return "done"
+    #     return "done"
