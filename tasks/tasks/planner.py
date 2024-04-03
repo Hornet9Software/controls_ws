@@ -1,83 +1,81 @@
-import numpy as np
-import pandas as pd
 import json
 
-df = pd.read_excel("path_plan.xlsx", sheet_name=0, header=None)
+import numpy as np
+import pandas as pd
 
 
-df = df[:-1]
+def main():
+    df = pd.read_excel("path_plan.xlsx", sheet_name=0, header=None)
 
-non_zero_positions = df.to_numpy().nonzero()
+    df = df[:-1]
 
-positions = {df.iloc[i, j]: np.array([j, -i]) for i, j in zip(*non_zero_positions)}
+    non_zero_positions = df.to_numpy().nonzero()
 
-positions = {
-    1: np.array([, ]),
-    2: np.array([, ]),
-    3: np.array([, ]),
-    4: np.array([, ]),
-    5: np.array([, ]),
-    6: np.array([, ]),
-    7: np.array([, ]),
-    8: np.array([, ]),
-}
+    positions = {df.iloc[i, j]: np.array([j, -i]) for i, j in zip(*non_zero_positions)}
 
-print(positions)
+    # positions = {
+    #     1: np.array([, ]),
+    #     2: np.array([, ]),
+    #     3: np.array([, ]),
+    #     4: np.array([, ]),
+    #     5: np.array([, ]),
+    #     6: np.array([, ]),
+    #     7: np.array([, ]),
+    #     8: np.array([, ]),
+    # }
 
+    def angle(vec):
+        x = vec[0]
+        y = vec[1]
 
-def angle(vec):
-    x = vec[0]
-    y = vec[1]
+        xa = abs(x)
+        ya = abs(y)
+        basic_angle = np.arctan2(ya, xa)
 
-    xa = abs(x)
-    ya = abs(y)
-    basic_angle = np.arctan2(ya, xa)
+        theta = 0
 
-    theta = 0
+        if x >= 0 and y >= 0:
+            theta = basic_angle
+        elif x < 0 and y >= 0:
+            theta = np.pi - basic_angle
+        elif x < 0 and y < 0:
+            theta = np.pi + basic_angle
+        else:
+            theta = (2 * np.pi) - basic_angle
 
-    if x >= 0 and y >= 0:
-        theta = basic_angle
-    elif x < 0 and y >= 0:
-        theta = np.pi - basic_angle
-    elif x < 0 and y < 0:
-        theta = np.pi + basic_angle
-    else:
-        theta = (2 * np.pi) - basic_angle
+        return theta - (np.pi / 2)
 
-    return theta - (np.pi / 2)
+    start_to_orange_flare = positions[2] - positions[1]
+    orange_flare_to_gate = positions[3] - positions[2]
+    gate_to_anchor = positions[4] - positions[3]
 
+    anchor_to_first_flare = positions[5] - positions[4]
+    first_flare_to_anchor = -anchor_to_first_flare
 
-start_to_orange_flare = positions[2] - positions[1]
-orange_flare_to_gate = positions[3] - positions[2]
-gate_to_anchor = positions[4] - positions[3]
+    anchor_to_second_flare = positions[6] - positions[4]
+    second_flare_to_anchor = -anchor_to_second_flare
 
-anchor_to_first_flare = positions[5] - positions[4]
-first_flare_to_anchor = -anchor_to_first_flare
+    anchor_to_third_flare = positions[7] - positions[4]
 
-anchor_to_second_flare = positions[6] - positions[4]
-second_flare_to_anchor = -anchor_to_second_flare
+    third_flare_to_buckets = positions[8] - positions[7]
 
-anchor_to_third_flare = positions[7] - positions[4]
+    sequence = [
+        start_to_orange_flare,
+        orange_flare_to_gate,
+        gate_to_anchor,
+        anchor_to_first_flare,
+        first_flare_to_anchor,
+        anchor_to_second_flare,
+        second_flare_to_anchor,
+        anchor_to_third_flare,
+        third_flare_to_buckets,
+    ]
 
-third_flare_to_buckets = positions[8] - positions[7]
+    movement_instructions = list(
+        map(lambda vec: [np.linalg.norm(vec), angle(vec)], sequence)
+    )
 
-sequence = [
-    start_to_orange_flare,
-    orange_flare_to_gate,
-    gate_to_anchor,
-    anchor_to_first_flare,
-    first_flare_to_anchor,
-    anchor_to_second_flare,
-    second_flare_to_anchor,
-    anchor_to_third_flare,
-    third_flare_to_buckets,
-]
+    with open("path.json", "w") as f:
+        json.dump(movement_instructions, f, indent=4)
 
-movement_instructions = list(
-    map(lambda vec: [np.linalg.norm(vec), angle(vec)], sequence)
-)
-
-with open("path.json", "w") as f:
-    json.dump(movement_instructions, f, indent=4)
-
-print(movement_instructions)
+    print(movement_instructions)

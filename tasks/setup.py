@@ -19,11 +19,10 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            # "test_publish_global_pose = tasks.test_publish_global_pose_task:main",
-            # "test_publish_current_state = tasks.test_publish_current_state:main",
             "movement_test = tasks.movement_test:main",
-            "main = tasks.main_run:main",
-            "quali = tasks.quali_run:main",
+            "main_run = tasks.main_run:main",
+            "qualification_run = tasks.quali_run:main",
+            "planner = tasks.planner:main",
         ],
     },
 )

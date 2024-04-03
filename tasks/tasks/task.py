@@ -62,8 +62,10 @@ class Task(State):
         pass
 
     def execute(self, blackboard):
+        self.init_time = time.time()
         while True:
-            # rclpy.spin_once(self.task_state)
+            self.curr_time = time.time()
+
             out = self.run(blackboard)
             if out != "running":
                 return out

@@ -17,13 +17,14 @@ class HoldForTime(Task):
         super().__init__(outcomes)
 
         self.time_to_hold = time_to_hold
-        self.init_time = time.time()
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
 
     def run(self, blackboard):
-        self.curr_time = time.time()
-        if self.curr_time - self.init_time > self.time_to_hold:
+
+        delta_t = self.curr_time - self.init_time
+
+        if delta_t > self.time_to_hold:
             return "done"
 
         self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
@@ -45,17 +46,12 @@ class MoveDistance(Task):
         super().__init__(outcomes)
 
         self.distance = distance
-        self.first = True
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
         self.eqm_time = eqm_time
 
     def run(self, blackboard):
-        if self.first:
-            self.init_time = time.time()
-            self.first = False
 
-        self.curr_time = time.time()
         delta_t = self.curr_time - self.init_time
 
         forward_time = 1.675 * self.distance - 1.0722
@@ -97,8 +93,9 @@ class MoveToObject(Task):
         targetRPY=[0, 0, 0],
         completion_time_threshold=10.0,
         angle_step=0.02,
-        start_sweep_delay=1.0,
+        # start_sweep_delay=1.0,
         sweeping_angle=np.radians(80),
+        eqm_time=5.0,
     ):
         super().__init__(outcomes)
 
@@ -109,77 +106,81 @@ class MoveToObject(Task):
         self.distance_threshold = distance_threshold
         self.completion_time_threshold = completion_time_threshold
         self.angle_step = angle_step
-        self.start_sweep_delay = start_sweep_delay
+        # self.start_sweep_delay = start_sweep_delay
         self.sweeping_angle = sweeping_angle
+        self.eqm_time = eqm_time
 
         # Init variables
         self.last_detected_time = None
         self.centre_yaw = self.targetRPY[2]
         self.total_angle = 0.0
-        self.control_loop_counter = 0
         self.first_detection = True
 
     def run(self, blackboard):
 
         self.clear_old_cv_data(self.object_name, refresh_time=1.0)
-        self.control_loop_counter += 1
-
-        curr_time = time.time()
+        delta_t = self.curr_time - self.init_time
         print()
-        print(f"CURRENT TIME: {curr_time}")
+        print(f"CURRENT TIME: {self.curr_time}")
         print(f"LAST DETECTED TIME: {self.last_detected_time}")
 
-        # If object is not detected,
-        if self.cv_data[self.object_name] is None:
+        # If vehicle needs time to equilibriate at the start,
+        if delta_t < self.eqm_time:
+            print("EQUILIBRIATING...")
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
+
+        # Else if object is not detected,
+        elif self.cv_data[self.object_name] is None:
             print("NOT DETECTED!")
 
             # If time since last detection is less than
             # delay to sweep, search in the direction of
             # the last detection.
-            if (
-                self.last_detected_time is not None
-                and curr_time - self.last_detected_time < self.start_sweep_delay
-            ):
-                self.correctVehicle(
-                    currRPY,
-                    self.targetRPY,
-                    self.currXYZ,
-                    self.targetXYZ,
-                    override_forward_acceleration=2.0,
-                    use_camera_pid=True,
-                )
+            # if (
+            #     self.last_detected_time is not None
+            #     and curr_time - self.last_detected_time < self.start_sweep_delay
+            # ):
+            #     self.correctVehicle(
+            #         currRPY,
+            #         self.targetRPY,
+            #         self.currXYZ,
+            #         self.targetXYZ,
+            #         override_forward_acceleration=2.0,
+            #         use_camera_pid=True,
+            #     )
 
-            # Otherwise, start sweeping
+            if self.last_detected_time is not None and self.targetRPY[2] < 0:
+                sweep_sign = -1
             else:
-                if self.last_detected_time is not None and self.targetRPY[2] < 0:
-                    sweep_sign = -1
-                else:
-                    sweep_sign = 1
+                sweep_sign = 1
 
-                self.targetRPY[2] = self.centre_yaw + sweep_sign * (
-                    self.sweeping_angle * np.sin(self.total_angle)
-                )
-                self.total_angle += self.angle_step
-                self.correctVehicle(
-                    self.currRPY,
-                    self.targetRPY,
-                    self.currXYZ,
-                    self.targetXYZ,
-                    use_camera_pid=True,
-                )
+            self.targetRPY[2] = self.centre_yaw + sweep_sign * (
+                self.sweeping_angle * np.sin(self.total_angle)
+            )
+            self.total_angle += self.angle_step
+
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
 
             # If the flares are not seen after a long time,
             # they have been knocked down.
             if self.last_detected_time is not None:
-                print("checking if knocked down")
+                print("CHECKING IF KNOCKED DOWN...")
                 if (
-                    curr_time - self.last_detected_time
+                    self.curr_time - self.last_detected_time
                 ) >= self.completion_time_threshold:
                     return "done"
-
-            time.sleep(0.1)
-
-            return "running"
 
         # If the object is detected,
         else:
@@ -239,6 +240,6 @@ class MoveToObject(Task):
                     use_camera_pid=True,
                 )
 
-            time.sleep(0.1)
+        time.sleep(0.1)
 
         return "running"

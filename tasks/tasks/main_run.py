@@ -42,6 +42,7 @@ class SM(Node):
             ),
             transitions={"done": "ORANGE_FLARE_TO_GATE"},
         )
+
         sm.add_state(
             "ORANGE_FLARE_TO_GATE",
             MoveToObject(
