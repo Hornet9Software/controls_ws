@@ -1,3 +1,4 @@
+import copy
 import math
 import time
 
@@ -7,7 +8,7 @@ import message_filters
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage, Image
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float64, Float64MultiArray
 from vision_msgs.msg import Detection2DArray
 
 
@@ -58,7 +59,7 @@ class CVControlSignals(Node):
             #             if object_name == "orange_flare":
             #                 continue
             self.object_publishers[object_name] = self.create_publisher(
-                Float32MultiArray,
+                Float64MultiArray,
                 "/object/" + object_name + "/bearing_lateral_distance",
                 10,
             )
@@ -83,12 +84,6 @@ class CVControlSignals(Node):
             y_max = y_centre + h / 2.0
 
             curr_time = time.time()
-
-            self.get_logger().info(
-                "{} XMIN XMAX YMIN YMAX: {}, {}, {}, {}".format(
-                    object_name, x_min, x_max, y_min, y_max
-                )
-            )
 
             object_width_pixels = x_max - x_min
             object_height_pixels = y_max - y_min
@@ -123,8 +118,11 @@ class CVControlSignals(Node):
 
             lateral = math.acos(min(projected_width, object_width) / object_width)
 
-            out_msg = Float32MultiArray()
+            out_msg = Float64MultiArray()
             out_msg.data = [curr_time, bearing, lateral, distance]
+
+            self.get_logger().info(f"{object_name} DETECTION: {out_msg.data}")
+
             self.object_publishers[object_name].publish(out_msg)
 
 

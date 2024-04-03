@@ -1,15 +1,26 @@
 import numpy as np
 import pandas as pd
+import json
 
 df = pd.read_excel("path_plan.xlsx", sheet_name=0, header=None)
 
 
 df = df[:-1]
-# Convert to NumPy array and find non-zero positions
+
 non_zero_positions = df.to_numpy().nonzero()
 
-# Map positions back to DataFrame index and columns
 positions = {df.iloc[i, j]: np.array([j, -i]) for i, j in zip(*non_zero_positions)}
+
+positions = {
+    1: np.array([, ]),
+    2: np.array([, ]),
+    3: np.array([, ]),
+    4: np.array([, ]),
+    5: np.array([, ]),
+    6: np.array([, ]),
+    7: np.array([, ]),
+    8: np.array([, ]),
+}
 
 print(positions)
 
@@ -36,8 +47,8 @@ def angle(vec):
     return theta - (np.pi / 2)
 
 
-start_to_flare = positions[2] - positions[1]
-flare_to_gate = positions[3] - positions[2]
+start_to_orange_flare = positions[2] - positions[1]
+orange_flare_to_gate = positions[3] - positions[2]
 gate_to_anchor = positions[4] - positions[3]
 
 anchor_to_first_flare = positions[5] - positions[4]
@@ -51,8 +62,8 @@ anchor_to_third_flare = positions[7] - positions[4]
 third_flare_to_buckets = positions[8] - positions[7]
 
 sequence = [
-    start_to_flare,
-    flare_to_gate,
+    start_to_orange_flare,
+    orange_flare_to_gate,
     gate_to_anchor,
     anchor_to_first_flare,
     first_flare_to_anchor,
@@ -63,7 +74,10 @@ sequence = [
 ]
 
 movement_instructions = list(
-    map(lambda vec: (np.linalg.norm(vec), np.degrees(angle(vec))), sequence)
+    map(lambda vec: [np.linalg.norm(vec), angle(vec)], sequence)
 )
+
+with open("path.json", "w") as f:
+    json.dump(movement_instructions, f, indent=4)
 
 print(movement_instructions)

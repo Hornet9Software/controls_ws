@@ -14,19 +14,20 @@ lateralPID = PID(Kp=5.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 depthPID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 
 
-def angle_error(curr_angle, target_angle):
+def bound_angle(angle):
+    """
+    Bound angle to [-pi, pi]
+    """
+    angle = angle % (2 * np.pi)
+    if angle < -np.pi:
+        return 2 * np.pi + angle
+    elif angle > np.pi:
+        return angle - 2 * np.pi
+    else:
+        return angle
 
-    def bound_angle(angle):
-        """
-        Bound angle to [-pi, pi]
-        """
-        angle = angle % (2 * np.pi)
-        if angle < -np.pi:
-            return 2 * np.pi + angle
-        elif angle > np.pi:
-            return angle - 2 * np.pi
-        else:
-            return angle
+
+def angle_error(curr_angle, target_angle):
 
     currAngle = bound_angle(curr_angle)
     targetAngle = bound_angle(target_angle)
@@ -35,23 +36,7 @@ def angle_error(curr_angle, target_angle):
 
 
 def angle_abs_error(curr_angle, target_angle):
-
-    def bound_angle(angle):
-        """
-        Bound angle to [-pi, pi]
-        """
-        angle = angle % (2 * np.pi)
-        if angle < -np.pi:
-            return 2 * np.pi + angle
-        elif angle > np.pi:
-            return angle - 2 * np.pi
-        else:
-            return angle
-
-    currAngle = bound_angle(curr_angle)
-    targetAngle = bound_angle(target_angle)
-
-    return abs(bound_angle(currAngle - targetAngle))
+    return abs(angle_error(curr_angle, target_angle))
 
 
 UPTHRUST = 1

@@ -10,7 +10,7 @@ targetXYZ = np.array([0, 0, -1.5])
 targetRPY = [0, 0, 0]
 
 gate_params = ChaseObjectParams(
-    object_name="yellow_flare",  # was red
+    object_name="blue_flare",  # was red
     threshold_dist=1.5,
     linear_acc=1.0,
 )

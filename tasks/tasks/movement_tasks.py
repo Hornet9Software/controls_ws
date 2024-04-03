@@ -95,88 +95,150 @@ class MoveToObject(Task):
         target_depth=-1.2,
         distance_threshold=2,
         targetRPY=[0, 0, 0],
-        completion_time_threshold=3.0,
+        completion_time_threshold=10.0,
+        angle_step=0.02,
+        start_sweep_delay=1.0,
+        sweeping_angle=np.radians(80),
     ):
         super().__init__(outcomes)
 
+        # Load parameters
         self.object_name = object_name
-
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
-
         self.distance_threshold = distance_threshold
-
         self.completion_time_threshold = completion_time_threshold
+        self.angle_step = angle_step
+        self.start_sweep_delay = start_sweep_delay
+        self.sweeping_angle = sweeping_angle
 
+        # Init variables
+        self.last_detected_time = None
         self.centre_yaw = self.targetRPY[2]
-
-        self.angle_step = 0.01
         self.total_angle = 0.0
-        self.sweeping_angle = np.radians(45)
+        self.control_loop_counter = 0
+        self.first_detection = True
 
     def run(self, blackboard):
 
         self.clear_old_cv_data(self.object_name, refresh_time=1.0)
+        self.control_loop_counter += 1
 
+        curr_time = time.time()
+        print()
+        print(f"CURRENT TIME: {curr_time}")
+        print(f"LAST DETECTED TIME: {self.last_detected_time}")
+
+        # If object is not detected,
         if self.cv_data[self.object_name] is None:
-            curr_time = time.time()
-            if (curr_time - self.last_detected_time) >= self.completion_time_threshold:
-                return "done"
+            print("NOT DETECTED!")
 
-            print("NOT DETECTED")
-            self.targetRPY[2] = self.centre_yaw + (
-                self.sweeping_angle * np.sin(self.total_angle)
-            )
-            self.total_angle += self.angle_step
-            self.correctVehicle(
-                self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
-            )
-
-            time.sleep(0.1)
-
-            return "running"
-
-        print("DETECTED!")
-        self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
-        self.last_detetcted_time = self.cv_data[self.object_name]["time"]
-
-        # Reset sweeping parameters
-        self.centre_yaw = self.targetRPY[2]
-        self.total_angle = 0.0
-
-        currRPY = copy(self.currRPY)
-        currRPY[2] = 0.0
-
-        if (
-            angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.1
-            or self.cv_data[self.object_name]["distance"] < self.distance_threshold
-        ):
-            if self.cv_data[self.object_name]["distance"] < self.distance_threshold:
-                # set yaw angular acceleration to 0
-                targetRPY = [0, 0, 0]
-                self.correctVehicle(
-                    currRPY,
-                    targetRPY,
-                    self.currXYZ,
-                    self.targetXYZ,
-                    override_forward_acceleration=2.0,
-                )
-            else:
+            # If time since last detection is less than
+            # delay to sweep, search in the direction of
+            # the last detection.
+            if (
+                self.last_detected_time is not None
+                and curr_time - self.last_detected_time < self.start_sweep_delay
+            ):
                 self.correctVehicle(
                     currRPY,
                     self.targetRPY,
                     self.currXYZ,
                     self.targetXYZ,
                     override_forward_acceleration=2.0,
+                    use_camera_pid=True,
                 )
-        else:
-            self.correctVehicle(
-                currRPY,
-                self.targetRPY,
-                self.currXYZ,
-                self.targetXYZ,
-            )
 
-        time.sleep(0.1)
+            # Otherwise, start sweeping
+            else:
+                if self.last_detected_time is not None and self.targetRPY[2] < 0:
+                    sweep_sign = -1
+                else:
+                    sweep_sign = 1
+
+                self.targetRPY[2] = self.centre_yaw + sweep_sign * (
+                    self.sweeping_angle * np.sin(self.total_angle)
+                )
+                self.total_angle += self.angle_step
+                self.correctVehicle(
+                    self.currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    use_camera_pid=True,
+                )
+
+            # If the flares are not seen after a long time,
+            # they have been knocked down.
+            if self.last_detected_time is not None:
+                print("checking if knocked down")
+                if (
+                    curr_time - self.last_detected_time
+                ) >= self.completion_time_threshold:
+                    return "done"
+
+            time.sleep(0.1)
+
+            return "running"
+
+        # If the object is detected,
+        else:
+            print("DETECTED!")
+
+            # Update target yaw and last detected time
+            self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+            self.last_detected_time = self.cv_data[self.object_name]["time"]
+
+            # Reset sweeping parameters
+            self.centre_yaw = self.currRPY[2]
+            self.total_angle = 0.0
+
+            # Zero curr yaw so that yaw error would be required rotation
+            # to face object.
+            currRPY = copy(self.currRPY)
+            currRPY[2] = 0.0
+
+            # If the error in yaw is small or if close to object,
+            # the robot can move.
+            if (
+                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.1
+                or self.cv_data[self.object_name]["distance"] < self.distance_threshold
+            ):
+                # If close to object, just move straight.
+                if self.cv_data[self.object_name]["distance"] < self.distance_threshold:
+                    # set yaw angular acceleration to 0
+                    targetRPY = [0, 0, 0]
+                    self.correctVehicle(
+                        currRPY,
+                        targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                        override_forward_acceleration=2.0,
+                        use_camera_pid=True,
+                    )
+
+                # If not close to object and error in yaw is small, correct angle
+                # and move at the same time.
+                else:
+                    self.correctVehicle(
+                        currRPY,
+                        self.targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                        override_forward_acceleration=2.0,
+                        use_camera_pid=True,
+                    )
+
+            # Otherwise, correct the angle but don't move the robot.
+            else:
+                self.correctVehicle(
+                    currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    use_camera_pid=True,
+                )
+
+            time.sleep(0.1)
 
         return "running"

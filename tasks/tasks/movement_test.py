@@ -15,64 +15,66 @@ class SM(Node):
 
         sm = StateMachine(outcomes=["finish"])
 
-        # sm.add_state(
-        #     "HOLD",
-        #     HoldForTime(
-        #         outcomes=["done"],
-        #         time_to_hold=10,
-        #         target_depth=-1.0,
-        #         targetRPY=[0.0, 0.0, np.radians(20)],
-        #     ),
-        #     # transitions={"done": "MOVE_TO_GATE"},
-        #     transitions={"done": "MOVE1"},
-        # )
-
-        # sm.add_state(
-        #     "MOVE1",
-        #     MoveDistance(
-        #         outcomes=["done"],
-        #         distance=8,
-        #         target_depth=-1.0,
-        #         targetRPY=[0.0, 0.0, np.radians(5)],
-        #         eqm_time=10,
-        #     ),
-        #     transitions={"done": "MOVE2"},
-        # )
-
-        # sm.add_state(
-        #     "MOVE2",
-        #     MoveDistance(
-        #         outcomes=["done"],
-        #         distance=3,
-        #         target_depth=-1.0,
-        #         targetRPY=[0.0, 0.0, -np.radians(10)],
-        #         eqm_time=10,
-        #     ),
-        #     transitions={"done": "MOVE_TO_GATE"},
-        #     # transitions={"done": "finish"},
-        # )
-
-        # sm.add_state(
-        #     "MOVE_TO_GATE",
-        #     MoveToObject(
-        #         outcomes=["done"],
-        #         object_name="gate",
-        #         target_depth=-1.0,
-        #         distance_threshold=2.0,
-        #         targetRPY=[0.0, 0.0, 0.0],
-        #     ),
-        #     transitions={"done": "finish"},
-        # )
+        sm.add_state(
+            "HOLD",
+            HoldForTime(
+                outcomes=["done"],
+                time_to_hold=5,
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, np.radians(-5)],
+            ),
+            # transitions={"done": "MOVE_TO_GATE"},
+            transitions={"done": "4_TO_5"},
+        )
 
         sm.add_state(
-            "MOVE_TO_GATE",
+            "4_TO_5",
             MoveToObject(
                 outcomes=["done"],
                 object_name="red_flare",
                 target_depth=-1.0,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, 0.0],
-                completion_time_threshold=3.0,
+                targetRPY=[0.0, 0.0, np.radians(-5)],
+                completion_time_threshold=40.0,
+                angle_step=0.01,
+            ),
+            transitions={"done": "5_TO_4"},
+        )
+
+        sm.add_state(
+            "5_TO_4",
+            MoveDistance(
+                outcomes=["done"],
+                distance=3,
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, np.radians(180 - 5)],
+                eqm_time=10,
+            ),
+            transitions={"done": "4_TO_6"},
+        )
+
+        sm.add_state(
+            "4_TO_6",
+            MoveToObject(
+                outcomes=["done"],
+                object_name="yellow_flare",
+                target_depth=-1.0,
+                distance_threshold=1.5,
+                targetRPY=[0.0, 0.0, np.radians(5)],
+                completion_time_threshold=40.0,
+                angle_step=0.01,
+            ),
+            transitions={"done": "6_TO_4"},
+        )
+
+        sm.add_state(
+            "6_TO_4",
+            MoveDistance(
+                outcomes=["done"],
+                distance=3,
+                target_depth=-1.0,
+                targetRPY=[0.0, 0.0, np.radians(180 + 5)],
+                eqm_time=10,
             ),
             transitions={"done": "finish"},
         )
