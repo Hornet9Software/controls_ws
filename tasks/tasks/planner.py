@@ -4,6 +4,33 @@ import numpy as np
 import pandas as pd
 
 
+class PathPlanner:
+    def __init__(self) -> None:
+        df = pd.read_excel("path_plan.xlsx", sheet_name=0, header=None)
+        df = df[:-1]
+        non_zero_positions = df.to_numpy().nonzero()
+        self.positions = {
+            df.iloc[i, j]: np.array([j, -i]) for i, j in zip(*non_zero_positions)
+        }
+
+        # self.positions = {
+        #     1: np.array([, ]),
+        #     2: np.array([, ]),
+        #     3: np.array([, ]),
+        #     4: np.array([, ]),
+        #     5: np.array([, ]),
+        #     6: np.array([, ]),
+        #     7: np.array([, ]),
+        #     8: np.array([, ]),
+        # }
+
+    def compute_before_flares(self):
+        pass
+
+    def compute_flares(self):
+        pass
+
+
 def main():
     df = pd.read_excel("path_plan.xlsx", sheet_name=0, header=None)
 
@@ -47,6 +74,7 @@ def main():
 
     start_to_orange_flare = positions[2] - positions[1]
     orange_flare_to_gate = positions[3] - positions[2]
+    gate_to_start = positions[1] - positions[3]
     gate_to_anchor = positions[4] - positions[3]
 
     anchor_to_first_flare = positions[5] - positions[4]
@@ -62,6 +90,7 @@ def main():
     sequence = [
         start_to_orange_flare,
         orange_flare_to_gate,
+        gate_to_start,
         gate_to_anchor,
         anchor_to_first_flare,
         first_flare_to_anchor,

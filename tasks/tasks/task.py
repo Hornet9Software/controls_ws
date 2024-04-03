@@ -54,6 +54,10 @@ class Task(State):
         return self.task_state.depth
 
     @property
+    def flare_order(self):
+        return self.task_state.flare_order
+
+    @property
     def logger(self):
         return self.task_state.get_logger()
 

@@ -5,7 +5,7 @@ import rclpy
 from custom_msgs.msg import Correction, State
 from imu_msg.msg import Imu
 from rclpy.node import Node
-from std_msgs.msg import Float32, Float64MultiArray
+from std_msgs.msg import Float32, Float64MultiArray, String
 
 
 class TaskState(Node):
@@ -23,6 +23,7 @@ class TaskState(Node):
         "red_drum",
     ]
     DEPTH_TOPIC = "/sensors/depth"  # no need for this once sensor fusion is up
+    LED_TOPIC = "/led/order"  # no need for this once sensor fusion is up
 
     def __init__(self):
         super().__init__(f"task_state_node")
@@ -34,8 +35,13 @@ class TaskState(Node):
             Float32, self.DEPTH_TOPIC, self._on_receive_depth, 10
         )
 
+        self.led_listener = self.create_subscription(
+            String, self.LED_TOPIC, self._on_receive_led, 10
+        )
+
         self.depth = -1.0
         self.state = [0.0, 0.0, 0.0]
+        self.flare_order = None
 
         self.cv_listeners = {}
         self.cv_data = {}
@@ -107,6 +113,13 @@ class TaskState(Node):
 
     def _on_receive_depth(self, msg):
         self.depth = msg.data
+
+    def _on_receive_led(self, msg):
+        flare_order = list(msg.data)
+
+        map_dict = {"R": "red_flare", "Y": "yellow_flare", "B": "blue_flare"}
+
+        self.flare_order = [map_dict[i] for i in flare_order]
 
     def clear_cv_data(self, object_name):
         self.cv_data[object_name] = None

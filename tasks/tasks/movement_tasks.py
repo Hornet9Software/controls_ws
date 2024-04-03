@@ -3,6 +3,7 @@ from copy import copy, deepcopy
 
 import numpy as np
 from controls_core.params import angle_abs_error
+from planner import PathPlanner
 from tasks.task import Task
 
 
@@ -239,6 +240,79 @@ class MoveToObject(Task):
                     self.targetXYZ,
                     use_camera_pid=True,
                 )
+
+        time.sleep(0.1)
+
+        return "running"
+
+
+class ReadCommsBuoy(Task):
+    def __init__(
+        self,
+        outcomes=["done"],
+        target_depth=-0.5,
+        targetRPY=[0, 0, 0],
+        wait_before_abort=50.0,
+        eqm_time=5.0,
+    ):
+        super().__init__(outcomes)
+
+        # Load parameters
+        self.order = {"first_flare": None, "second_flare": None, "third_flare": None}
+        self.targetXYZ = [0.0, 0.0, target_depth]
+        self.targetRPY = targetRPY
+        self.wait_before_abort = wait_before_abort
+        self.eqm_time = eqm_time
+
+        self.angle_step = 0.05
+        self.sweeping_angle = np.radians(30)
+        self.centre_yaw = self.targetRPY[2]
+        self.total_angle = 0.0
+
+    def run(self, blackboard):
+
+        delta_t = self.curr_time - self.init_time
+
+        # If vehicle needs time to equilibriate at the start,
+        if delta_t < self.eqm_time:
+            print("EQUILIBRIATING...")
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
+
+        # else if led not detected yet...
+        elif self.flare_order is None:
+            print("NOT DETECTED!")
+
+            self.targetRPY[2] = self.centre_yaw + (
+                self.sweeping_angle * np.sin(self.total_angle)
+            )
+            self.total_angle += self.angle_step
+
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
+
+            # If no detection after a long time, just pick one order and move on
+            if delta_t > self.wait_before_abort:
+                blackboard.order = PathPlanner().compute_flares(
+                    ["red_flare", "yellow_flare", "blue_flare"]
+                )
+                return "done"
+
+        # If the object is detected,
+        else:
+            print("DETECTED!")
+            blackboard.order = PathPlanner().compute_flares(self.flare_order)
+            return "done"
 
         time.sleep(0.1)
 
