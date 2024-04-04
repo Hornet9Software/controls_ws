@@ -6,11 +6,9 @@ import numpy as np
 import rclpy
 from simple_node import Node
 from tasks.movement_tasks import *
+from tasks.planner import PathPlanner
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
-
-with open("path.json", "r") as f:
-    PATH = json.load(f)
 
 
 class SM(Node):
@@ -19,6 +17,8 @@ class SM(Node):
         super().__init__("task_node")
 
         sm = StateMachine(outcomes=["finish"])
+
+        self.instructions = PathPlanner().compute_before_flares()
 
         sm.add_state(
             "CALIBRATE",
@@ -35,9 +35,9 @@ class SM(Node):
             "START_TO_ORANGE_FLARE",
             MoveDistance(
                 outcomes=["done"],
-                distance=PATH[0][0],
+                distance=self.instructions[0][0],
                 target_depth=-1.0,
-                targetRPY=[0.0, 0.0, PATH[0][1]],
+                targetRPY=[0.0, 0.0, self.instructions[0][1]],
                 eqm_time=10,
             ),
             transitions={"done": "ORANGE_FLARE_TO_GATE"},
@@ -50,9 +50,21 @@ class SM(Node):
                 object_name="yellow_flare",
                 target_depth=-1.0,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, PATH[1][1]],
+                targetRPY=[0.0, 0.0, self.instructions[1][1]],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
+            ),
+            transitions={"done": "READ_COMMS_BUOY"},
+        )
+
+        sm.add_state(
+            "READ_COMMS_BUOY",
+            ReadCommsBuoy(
+                outcomes=["done"],
+                target_depth=-0.5,
+                targetRPY=[0, 0, self.instructions[2][1]],
+                wait_before_abort=50,
+                eqm_time=5.0,
             ),
             transitions={"done": "GATE_TO_ANCHOR"},
         )
@@ -61,9 +73,9 @@ class SM(Node):
             "GATE_TO_ANCHOR",
             MoveDistance(
                 outcomes=["done"],
-                distance=PATH[2][0],
+                distance=self.instructions[3][0],
                 target_depth=-1.0,
-                targetRPY=[0.0, 0.0, PATH[2][1]],
+                targetRPY=[0.0, 0.0, self.instructions[3][1]],
                 eqm_time=10,
             ),
             transitions={"done": "ANCHOR_TO_FIRST_FLARE"},
@@ -71,12 +83,11 @@ class SM(Node):
 
         sm.add_state(
             "ANCHOR_TO_FIRST_FLARE",
-            MoveToObject(
+            HitFlare(
+                flare_number=1,
                 outcomes=["done"],
-                object_name="red_flare",
                 target_depth=-1.0,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, PATH[3][1]],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
             ),
@@ -85,11 +96,10 @@ class SM(Node):
 
         sm.add_state(
             "FIRST_FLARE_TO_ANCHOR",
-            MoveDistance(
+            MoveFromFlare(
+                flare_number=1,
                 outcomes=["done"],
-                distance=PATH[4][0],
                 target_depth=-1.0,
-                targetRPY=[0.0, 0.0, PATH[4][1]],
                 eqm_time=10,
             ),
             transitions={"done": "ANCHOR_TO_SECOND_FLARE"},
@@ -97,12 +107,11 @@ class SM(Node):
 
         sm.add_state(
             "ANCHOR_TO_SECOND_FLARE",
-            MoveToObject(
+            HitFlare(
+                flare_number=2,
                 outcomes=["done"],
-                object_name="red_flare",
                 target_depth=-1.0,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, PATH[5][1]],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
             ),
@@ -111,11 +120,10 @@ class SM(Node):
 
         sm.add_state(
             "SECOND_FLARE_TO_ANCHOR",
-            MoveDistance(
+            MoveFromFlare(
+                flare_number=2,
                 outcomes=["done"],
-                distance=PATH[6][0],
                 target_depth=-1.0,
-                targetRPY=[0.0, 0.0, PATH[6][1]],
                 eqm_time=10,
             ),
             transitions={"done": "ANCHOR_TO_THIRD_FLARE"},
@@ -123,12 +131,11 @@ class SM(Node):
 
         sm.add_state(
             "ANCHOR_TO_THIRD_FLARE",
-            MoveToObject(
+            HitFlare(
+                flare_number=3,
                 outcomes=["done"],
-                object_name="red_flare",
                 target_depth=-1.0,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, PATH[7][1]],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
             ),
@@ -137,11 +144,10 @@ class SM(Node):
 
         sm.add_state(
             "THIRD_FLARE_TO_BUCKETS",
-            MoveDistance(
+            MoveFromFlare(
+                flare_number=3,
                 outcomes=["done"],
-                distance=PATH[8][0],
                 target_depth=-1.0,
-                targetRPY=[0.0, 0.0, PATH[8][1]],
                 eqm_time=10,
             ),
             transitions={"done": "SURFACE"},

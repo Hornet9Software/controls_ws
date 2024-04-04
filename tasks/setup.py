@@ -22,7 +22,6 @@ setup(
             "movement_test = tasks.movement_test:main",
             "main_run = tasks.main_run:main",
             "qualification_run = tasks.quali_run:main",
-            "planner = tasks.planner:main",
         ],
     },
 )

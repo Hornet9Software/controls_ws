@@ -119,7 +119,11 @@ class TaskState(Node):
 
         map_dict = {"R": "red_flare", "Y": "yellow_flare", "B": "blue_flare"}
 
-        self.flare_order = [map_dict[i] for i in flare_order]
+        self.flare_order = {
+            "first": map_dict[flare_order[0]],
+            "second": map_dict[flare_order[1]],
+            "third": map_dict[flare_order[2]],
+        }
 
     def clear_cv_data(self, object_name):
         self.cv_data[object_name] = None

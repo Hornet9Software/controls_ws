@@ -3,6 +3,7 @@ from copy import copy, deepcopy
 
 import numpy as np
 from controls_core.params import angle_abs_error
+from numpy import radians
 from planner import PathPlanner
 from tasks.task import Task
 
@@ -82,6 +83,37 @@ class MoveDistance(Task):
         time.sleep(0.1)
 
         return "running"
+
+
+class MoveFromFlare(MoveDistance):
+    def __init__(
+        self,
+        flare_number,
+        outcomes=["done"],
+        distance=5,
+        target_depth=-1.2,
+        targetRPY=[0, 0, 0],
+        eqm_time=30,
+    ):
+        super().__init__(outcomes, distance, target_depth, targetRPY, eqm_time)
+
+        self.instruction_number = {
+            1: 1,
+            2: 3,
+            3: 5,
+        }[flare_number]
+
+        self.first_run = True
+
+    def run(self, blackboard):
+        if self.first_run:
+            self.order = blackboard.order
+            self.instructions = blackboard.instructions
+            self.targetRPY = [0, 0, self.instructions[self.instruction_number][1]]
+            self.distance = self.instructions[self.instruction_number][0]
+            self.first_run = False
+
+        return super().run(blackboard)
 
 
 class MoveToObject(Task):
@@ -246,6 +278,53 @@ class MoveToObject(Task):
         return "running"
 
 
+class HitFlare(MoveToObject):
+    def __init__(
+        self,
+        flare_number,
+        outcomes=["done"],
+        object_name="blue_flare",
+        target_depth=-1.2,
+        distance_threshold=2,
+        targetRPY=[0, 0, 0],
+        completion_time_threshold=10,
+        angle_step=0.02,
+        sweeping_angle=np.radians(80),
+        eqm_time=5,
+    ):
+        super().__init__(
+            outcomes,
+            object_name,
+            target_depth,
+            distance_threshold,
+            targetRPY,
+            completion_time_threshold,
+            angle_step,
+            sweeping_angle,
+            eqm_time,
+        )
+
+        self.instruction_number = {
+            1: 0,
+            2: 2,
+            3: 4,
+        }[flare_number]
+
+        self.flare_number = {1: "first", 2: "second", 3: "third"}[flare_number]
+
+        self.first_run = True
+
+    def run(self, blackboard):
+        if self.first_run:
+            self.order = blackboard.order
+            self.instructions = blackboard.instructions
+            self.targetRPY = [0, 0, self.instructions[self.instruction_number][1]]
+            self.object_name = self.order[self.flare_number]
+            self.first_run = False
+
+        return super().run(blackboard)
+
+
 class ReadCommsBuoy(Task):
     def __init__(
         self,
@@ -258,7 +337,6 @@ class ReadCommsBuoy(Task):
         super().__init__(outcomes)
 
         # Load parameters
-        self.order = {"first_flare": None, "second_flare": None, "third_flare": None}
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
         self.wait_before_abort = wait_before_abort
@@ -286,7 +364,7 @@ class ReadCommsBuoy(Task):
 
         # else if led not detected yet...
         elif self.flare_order is None:
-            print("NOT DETECTED!")
+            print("LED NOT DETECTED!")
 
             self.targetRPY[2] = self.centre_yaw + (
                 self.sweeping_angle * np.sin(self.total_angle)
@@ -303,15 +381,16 @@ class ReadCommsBuoy(Task):
 
             # If no detection after a long time, just pick one order and move on
             if delta_t > self.wait_before_abort:
-                blackboard.order = PathPlanner().compute_flares(
-                    ["red_flare", "yellow_flare", "blue_flare"]
-                )
+                blackboard.order = PathPlanner().default_flare_order
+                blackboard.instructions = PathPlanner().compute_flares()
                 return "done"
 
         # If the object is detected,
         else:
-            print("DETECTED!")
-            blackboard.order = PathPlanner().compute_flares(self.flare_order)
+            print("LED DETECTED!")
+            print(f"FLARE ORDER: {self.flare_order}")
+            blackboard.order = self.flare_order
+            blackboard.instructions = PathPlanner().compute_flares(self.flare_order)
             return "done"
 
         time.sleep(0.1)
