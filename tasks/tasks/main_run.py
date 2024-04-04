@@ -11,7 +11,7 @@ from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
 
 FLARE_DEPTH = -1.2
-BUOY_DEPTH = -0.8
+BUOY_DEPTH = -0.6
 
 
 class SM(Node):
@@ -28,7 +28,7 @@ class SM(Node):
             HoldForTime(
                 outcomes=["done"],
                 time_to_hold=10,
-                target_depth=BUOY_DEPTH,
+                target_depth=FLARE_DEPTH,
                 targetRPY=[0.0, 0.0, 0.0],
             ),
             transitions={"done": "START_TO_ORANGE_FLARE"},
@@ -39,7 +39,7 @@ class SM(Node):
             MoveDistance(
                 outcomes=["done"],
                 distance=self.instructions[0][0],
-                target_depth=BUOY_DEPTH,
+                target_depth=FLARE_DEPTH,
                 targetRPY=[0.0, 0.0, self.instructions[0][1]],
                 eqm_time=10,
             ),
@@ -51,7 +51,7 @@ class SM(Node):
             MoveToGate(
                 outcomes=["done"],
                 object_name="gate",
-                target_depth=BUOY_DEPTH,
+                target_depth=FLARE_DEPTH,
                 distance_threshold=2.5,
                 targetRPY=[0.0, 0.0, self.instructions[1][1]],
                 completion_time_threshold=20.0,
@@ -65,7 +65,7 @@ class SM(Node):
             MoveDistance(
                 outcomes=["done"],
                 distance=self.instructions[2][0],
-                target_depth=BUOY_DEPTH,
+                target_depth=FLARE_DEPTH,
                 targetRPY=[0.0, 0.0, self.instructions[2][1]],
                 eqm_time=10,
             ),
@@ -79,7 +79,7 @@ class SM(Node):
                 target_depth=BUOY_DEPTH,
                 targetRPY=[0, 0, self.instructions[3][1]],
                 wait_before_abort=10,
-                eqm_time=5.0,
+                eqm_time=10.0,
             ),
             transitions={"done": "GATE_TO_ANCHOR"},
         )
