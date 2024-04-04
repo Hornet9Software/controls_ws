@@ -22,9 +22,10 @@ class SM(Node):
             MoveDistance(
                 outcomes=["done"],
                 distance=11.0,
-                target_depth=-1.0,
-                targetRPY=[0.0, 0.0, 0.0],
-                eqm_time=10,
+                target_depth=-0.9,
+                targetRPY=[0.0, 0.0, np.radians(-20)],
+                eqm_time=2,
+                override_forward_acceleration=4.0,
             ),
             transitions={"done": "finish"},
         )

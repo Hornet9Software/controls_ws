@@ -4,7 +4,7 @@ from copy import copy, deepcopy
 import numpy as np
 from controls_core.params import angle_abs_error
 from numpy import radians
-from planner import PathPlanner
+from tasks.planner import PathPlanner
 from tasks.task import Task
 
 
@@ -44,6 +44,7 @@ class MoveDistance(Task):
         target_depth=-1.2,
         targetRPY=[0, 0, 0],
         eqm_time=30,
+        override_forward_acceleration=3.0,
     ):
         super().__init__(outcomes)
 
@@ -51,6 +52,7 @@ class MoveDistance(Task):
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
         self.eqm_time = eqm_time
+        self.override_forward_acceleration = override_forward_acceleration
 
     def run(self, blackboard):
 
@@ -68,7 +70,7 @@ class MoveDistance(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                override_forward_acceleration=3.0,
+                override_forward_acceleration=self.override_forward_acceleration,
             )
         elif (
             delta_t >= self.eqm_time + forward_time
@@ -94,8 +96,16 @@ class MoveFromFlare(MoveDistance):
         target_depth=-1.2,
         targetRPY=[0, 0, 0],
         eqm_time=30,
+        override_forward_acceleration=3.0,
     ):
-        super().__init__(outcomes, distance, target_depth, targetRPY, eqm_time)
+        super().__init__(
+            outcomes,
+            distance,
+            target_depth,
+            targetRPY,
+            eqm_time,
+            override_forward_acceleration,
+        )
 
         self.instruction_number = {
             1: 1,
@@ -114,6 +124,110 @@ class MoveFromFlare(MoveDistance):
             self.first_run = False
 
         return super().run(blackboard)
+
+
+class MoveToGate(Task):
+    def __init__(
+        self,
+        outcomes=["done"],
+        object_name="gate",
+        target_depth=-1.2,
+        distance_threshold=2,
+        targetRPY=[0, 0, 0],
+        completion_time_threshold=10.0,
+        angle_step=0.02,
+        sweeping_angle=np.radians(80),
+        eqm_time=5.0,
+    ):
+        super().__init__(outcomes)
+
+        # Load parameters
+        self.object_name = object_name
+        self.targetXYZ = [0.0, 0.0, target_depth]
+        self.targetRPY = targetRPY
+        self.distance_threshold = distance_threshold
+        self.completion_time_threshold = completion_time_threshold
+        self.angle_step = angle_step
+        self.sweeping_angle = sweeping_angle
+        self.eqm_time = eqm_time
+
+        # Init variables
+        self.last_detected_time = None
+        self.centre_yaw = self.targetRPY[2]
+        self.total_angle = 0.0
+        self.first_detection = True
+
+    def run(self, blackboard):
+
+        self.clear_old_cv_data(self.object_name, refresh_time=1.0)
+        delta_t = self.curr_time - self.init_time
+        print()
+        print(f"CURRENT TIME: {self.curr_time}")
+        print(f"LAST DETECTED TIME: {self.last_detected_time}")
+
+        # If vehicle needs time to equilibriate at the start,
+        if delta_t < self.eqm_time:
+            print("EQUILIBRIATING...")
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
+
+        elif self.cv_data[self.object_name] is not None:
+            self.last_detected_time = self.cv_data[self.object_name]["time"]
+
+            self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+            currRPY = copy(self.currRPY)
+            currRPY[2] = 0.0
+
+            if (
+                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.1
+                or self.cv_data[self.object_name]["distance"] < self.distance_threshold
+            ):
+
+                self.correctVehicle(
+                    currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    override_forward_acceleration=1.5,
+                    use_camera_pid=True,
+                )
+
+            # Otherwise, correct the angle but don't move the robot.
+            else:
+                self.correctVehicle(
+                    currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    use_camera_pid=True,
+                )
+
+        else:
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                use_camera_pid=True,
+            )
+
+            # If the flares are not seen after a long time,
+            # they have been knocked down.
+            if self.last_detected_time is not None:
+                print("CHECKING IF KNOCKED DOWN...")
+                if (
+                    self.curr_time - self.last_detected_time
+                ) >= self.completion_time_threshold:
+                    return "done"
+
+        time.sleep(0.1)
+
+        return "running"
 
 
 class MoveToObject(Task):
@@ -188,10 +302,10 @@ class MoveToObject(Task):
             #         use_camera_pid=True,
             #     )
 
-            if self.last_detected_time is not None and self.targetRPY[2] < 0:
-                sweep_sign = -1
-            else:
+            if self.last_detected_time is not None and self.targetRPY[2] > 0:
                 sweep_sign = 1
+            else:
+                sweep_sign = -1
 
             self.targetRPY[2] = self.centre_yaw + sweep_sign * (
                 self.sweeping_angle * np.sin(self.total_angle)
@@ -231,6 +345,8 @@ class MoveToObject(Task):
             # to face object.
             currRPY = copy(self.currRPY)
             currRPY[2] = 0.0
+
+            print(self.cv_data[self.object_name]["distance"])
 
             # If the error in yaw is small or if close to object,
             # the robot can move.

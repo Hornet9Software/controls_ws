@@ -25,14 +25,14 @@ class PathPlanner:
         # }
 
         self.positions = {
-            "start": np.array([14, -25]),
-            "orange_flare": np.array([14, -17]),
-            "gate": np.array([14, -13]),
-            "anchor": np.array([14, -11]),
-            "red_flare": np.array([18, -9]),
-            "yellow_flare": np.array([18, -11]),
-            "blue_flare": np.array([18, -13]),
-            "buckets": np.array([14, -5]),
+            "start": np.array([2.5, 0]),
+            "orange_flare": np.array([1.5, 5]),
+            "gate": np.array([2.5, 11]),
+            "anchor": np.array([2.5, 13]),
+            "red_flare": np.array([4, 15]),
+            "yellow_flare": np.array([4, 15]),
+            "blue_flare": np.array([4, 15]),
+            "buckets": np.array([4, 15]),
         }
 
         self.default_flare_order = {
