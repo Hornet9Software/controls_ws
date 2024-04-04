@@ -23,9 +23,9 @@ class SM(Node):
                 outcomes=["done"],
                 distance=11.0,
                 target_depth=-0.9,
-                targetRPY=[0.0, 0.0, np.radians(-20)],
-                eqm_time=2,
-                override_forward_acceleration=4.0,
+                targetRPY=[0.0, 0.0, np.radians(-10)],
+                eqm_time=10,
+                override_forward_acceleration=3.0,
             ),
             transitions={"done": "finish"},
         )

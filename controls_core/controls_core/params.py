@@ -4,7 +4,8 @@ from controls_core.PID import PID
 rollPID = PID(Kp=25.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 pitchPID = PID(Kp=25.0, Ki=0.0, Kd=10.0, sample_time=0.1)
 yawPID = PID(Kp=35.0, Ki=0.0, Kd=5.0, sample_time=0.1)
-cameraSteerPID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
+gatePID = PID(Kp=10.0, Ki=0.0, Kd=5.0, sample_time=0.1)
+flarePID = PID(Kp=15.0, Ki=0.0, Kd=5.0, sample_time=0.1)
 
 # pitchPID = PID(Kp=0.0, Ki=0.0, Kd=0.0, sample_time=0.1)
 

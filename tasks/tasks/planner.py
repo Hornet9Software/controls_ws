@@ -28,11 +28,12 @@ class PathPlanner:
             "start": np.array([2.5, 0]),
             "orange_flare": np.array([1.5, 5]),
             "gate": np.array([2.5, 11]),
-            "anchor": np.array([2.5, 13]),
-            "red_flare": np.array([4, 15]),
-            "yellow_flare": np.array([4, 15]),
-            "blue_flare": np.array([4, 15]),
-            "buckets": np.array([4, 15]),
+            "gate_in_front": np.array([2.5, 13]),
+            "anchor": np.array([2.5, 15]),
+            "red_flare": np.array([4, 17]),
+            "yellow_flare": np.array([4, 17]),
+            "blue_flare": np.array([4, 17]),
+            "buckets": np.array([4, 17]),
         }
 
         self.default_flare_order = {
@@ -44,14 +45,20 @@ class PathPlanner:
     def compute_before_flares(self):
         start_to_orange_flare = self.positions["orange_flare"] - self.positions["start"]
         orange_flare_to_gate = self.positions["gate"] - self.positions["orange_flare"]
-        gate_to_start = self.positions["start"] - self.positions["gate"]
-        gate_to_anchor = self.positions["anchor"] - self.positions["gate"]
+        gate_to_gate_in_front = self.positions["gate_in_front"] - self.positions["gate"]
+        gate_in_front_to_start = (
+            self.positions["start"] - self.positions["gate_in_front"]
+        )
+        gate_in_front_to_anchor = (
+            self.positions["anchor"] - self.positions["gate_in_front"]
+        )
 
         sequence = [
             start_to_orange_flare,
             orange_flare_to_gate,
-            gate_to_start,
-            gate_to_anchor,
+            gate_to_gate_in_front,
+            gate_in_front_to_start,
+            gate_in_front_to_anchor,
         ]
 
         return self.compute_polar(sequence)

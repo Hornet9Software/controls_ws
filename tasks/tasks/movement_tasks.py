@@ -135,8 +135,6 @@ class MoveToGate(Task):
         distance_threshold=2,
         targetRPY=[0, 0, 0],
         completion_time_threshold=10.0,
-        angle_step=0.02,
-        sweeping_angle=np.radians(80),
         eqm_time=5.0,
     ):
         super().__init__(outcomes)
@@ -147,15 +145,10 @@ class MoveToGate(Task):
         self.targetRPY = targetRPY
         self.distance_threshold = distance_threshold
         self.completion_time_threshold = completion_time_threshold
-        self.angle_step = angle_step
-        self.sweeping_angle = sweeping_angle
         self.eqm_time = eqm_time
 
         # Init variables
         self.last_detected_time = None
-        self.centre_yaw = self.targetRPY[2]
-        self.total_angle = 0.0
-        self.first_detection = True
 
     def run(self, blackboard):
 
@@ -173,7 +166,7 @@ class MoveToGate(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="gate",
             )
 
         elif self.cv_data[self.object_name] is not None:
@@ -194,7 +187,7 @@ class MoveToGate(Task):
                     self.currXYZ,
                     self.targetXYZ,
                     override_forward_acceleration=1.5,
-                    use_camera_pid=True,
+                    pid_type="gate",
                 )
 
             # Otherwise, correct the angle but don't move the robot.
@@ -204,7 +197,7 @@ class MoveToGate(Task):
                     self.targetRPY,
                     self.currXYZ,
                     self.targetXYZ,
-                    use_camera_pid=True,
+                    pid_type="gate",
                 )
 
         else:
@@ -213,7 +206,7 @@ class MoveToGate(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="gate",
             )
 
             # If the flares are not seen after a long time,
@@ -240,7 +233,6 @@ class MoveToObject(Task):
         targetRPY=[0, 0, 0],
         completion_time_threshold=10.0,
         angle_step=0.02,
-        # start_sweep_delay=1.0,
         sweeping_angle=np.radians(80),
         eqm_time=5.0,
     ):
@@ -253,7 +245,6 @@ class MoveToObject(Task):
         self.distance_threshold = distance_threshold
         self.completion_time_threshold = completion_time_threshold
         self.angle_step = angle_step
-        # self.start_sweep_delay = start_sweep_delay
         self.sweeping_angle = sweeping_angle
         self.eqm_time = eqm_time
 
@@ -279,7 +270,7 @@ class MoveToObject(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="flare",
             )
 
         # Else if object is not detected,
@@ -317,7 +308,7 @@ class MoveToObject(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="flare",
             )
 
             # If the flares are not seen after a long time,
@@ -364,7 +355,7 @@ class MoveToObject(Task):
                         self.currXYZ,
                         self.targetXYZ,
                         override_forward_acceleration=2.0,
-                        use_camera_pid=True,
+                        pid_type="flare",
                     )
 
                 # If not close to object and error in yaw is small, correct angle
@@ -376,7 +367,7 @@ class MoveToObject(Task):
                         self.currXYZ,
                         self.targetXYZ,
                         override_forward_acceleration=2.0,
-                        use_camera_pid=True,
+                        pid_type="flare",
                     )
 
             # Otherwise, correct the angle but don't move the robot.
@@ -386,7 +377,7 @@ class MoveToObject(Task):
                     self.targetRPY,
                     self.currXYZ,
                     self.targetXYZ,
-                    use_camera_pid=True,
+                    pid_type="flare",
                 )
 
         time.sleep(0.1)
@@ -475,7 +466,7 @@ class ReadCommsBuoy(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="normal",
             )
 
         # else if led not detected yet...
@@ -492,7 +483,7 @@ class ReadCommsBuoy(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                use_camera_pid=True,
+                pid_type="normal",
             )
 
             # If no detection after a long time, just pick one order and move on

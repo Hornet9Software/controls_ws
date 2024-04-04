@@ -3,7 +3,7 @@ import time
 from abc import abstractmethod
 
 import rclpy
-from controls_core.PIDManager import PIDCameraManager, PIDManager
+from controls_core.PIDManager import *
 from dependency_injector import providers
 from tasks.task_state import TaskState
 from yasmin import State
@@ -11,8 +11,9 @@ from yasmin import State
 
 class Task(State):
     TASK_STATE_PROVIDER = providers.ThreadSafeSingleton(TaskState)
-    PID_MANAGER_PROVIDER = providers.Singleton(PIDManager)
-    PID_CAMERA_MANAGER_PROVIDER = providers.Singleton(PIDCameraManager)
+    PID_MANAGER_PROVIDER = providers.Singleton(NormalPIDManager)
+    GATE_PID_MANAGER_PROVIDER = providers.Singleton(GatePIDManager)
+    FLARE_PID_MANAGER_PROVIDER = providers.Singleton(FlarePIDManager)
 
     def __init__(self, outcomes):
 
@@ -20,7 +21,8 @@ class Task(State):
 
         self.task_state = self.TASK_STATE_PROVIDER()
         self.pid_manager = self.PID_MANAGER_PROVIDER()
-        self.pid_camera_manager = self.PID_CAMERA_MANAGER_PROVIDER()
+        self.gate_pid_manager = self.GATE_PID_MANAGER_PROVIDER()
+        self.flare_pid_manager = self.FLARE_PID_MANAGER_PROVIDER()
         self.start_time = None
         self.initial_state = None
         self.output = {}
@@ -94,22 +96,17 @@ class Task(State):
         currXYZ,
         targetXYZ,
         override_forward_acceleration=None,
-        use_camera_pid=False,
+        pid_type="normal",
     ):
-        if use_camera_pid:
-            return self.pid_camera_manager.correctVehicle(
+        if pid_type == "normal":
+            return self.pid_manager.correctVehicle(
                 currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
             )
-        return self.pid_manager.correctVehicle(
-            currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
-        )
-
-    # def task_complete(self):
-    #     self.targetRPY = [0.0, 0.0, 0.0]
-    #     self.targetXYZ = [0.0, 0.0, 0.0]
-    #     self.currRPY = [0.0, 0.0, 0.0]
-    #     self.currentXYZ = [0.0, 0.0, 0.0]
-    #     self.logger.info("{} COMPLETE, TURNING OFF THRUSTERS...".format(self.name))
-    #     self.correctVehicle(self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ)
-
-    #     return "done"
+        elif pid_type == "gate":
+            return self.gate_pid_manager.correctVehicle(
+                currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
+            )
+        elif pid_type == "flare":
+            return self.flare_pid_manager.correctVehicle(
+                currRPY, targetRPY, currXYZ, targetXYZ, override_forward_acceleration
+            )
