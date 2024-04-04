@@ -8,6 +8,8 @@ from tasks.movement_tasks import *
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
 
+flare_depth = -1.2
+
 
 class SM(Node):
     def __init__(self):
@@ -20,8 +22,8 @@ class SM(Node):
             HoldForTime(
                 outcomes=["done"],
                 time_to_hold=5,
-                target_depth=-1.0,
-                targetRPY=[0.0, 0.0, np.radians(-5)],
+                target_depth=flare_depth,
+                targetRPY=[0.0, 0.0, np.radians(180)],
             ),
             # transitions={"done": "MOVE_TO_GATE"},
             transitions={"done": "4_TO_5"},
@@ -32,9 +34,9 @@ class SM(Node):
             MoveToObject(
                 outcomes=["done"],
                 object_name="red_flare",
-                target_depth=-1.0,
+                target_depth=flare_depth,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, np.radians(-5)],
+                targetRPY=[0.0, 0.0, np.radians(180)],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
             ),
@@ -46,8 +48,8 @@ class SM(Node):
             MoveDistance(
                 outcomes=["done"],
                 distance=3,
-                target_depth=-1.0,
-                targetRPY=[0.0, 0.0, np.radians(180 - 5)],
+                target_depth=flare_depth,
+                targetRPY=[0.0, 0.0, np.radians(0)],
                 eqm_time=10,
             ),
             transitions={"done": "4_TO_6"},
@@ -58,9 +60,9 @@ class SM(Node):
             MoveToObject(
                 outcomes=["done"],
                 object_name="yellow_flare",
-                target_depth=-1.0,
+                target_depth=flare_depth,
                 distance_threshold=1.5,
-                targetRPY=[0.0, 0.0, np.radians(5)],
+                targetRPY=[0.0, 0.0, np.radians(180)],
                 completion_time_threshold=40.0,
                 angle_step=0.01,
             ),
@@ -72,8 +74,8 @@ class SM(Node):
             MoveDistance(
                 outcomes=["done"],
                 distance=3,
-                target_depth=-1.0,
-                targetRPY=[0.0, 0.0, np.radians(180 + 5)],
+                target_depth=flare_depth,
+                targetRPY=[0.0, 0.0, np.radians(0)],
                 eqm_time=10,
             ),
             transitions={"done": "finish"},
