@@ -4,7 +4,7 @@ import threading
 import numpy as np
 import rclpy
 from controls_core.params import *
-from controls_core.PIDManager import PIDManager
+from controls_core.PIDManager import NormalPIDManager
 from imu_msg.msg import Imu
 from rclpy.node import Node
 from sshkeyboard import listen_keyboard
@@ -18,7 +18,7 @@ class Teleop(Node):
 
         self.create_timer(0.1, self._controlLoop)
 
-        self.pid_manager = PIDManager()
+        self.pid_manager = NormalPIDManager()
 
         self.currXYZ = [0.0, 0.0, 0.0]
         self.currRPY = [0.0, 0.0, 0.0]

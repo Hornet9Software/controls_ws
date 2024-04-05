@@ -22,8 +22,14 @@ class HoldForTime(Task):
         self.time_to_hold = time_to_hold
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
+        self.first_run = True
 
     def run(self, blackboard):
+        if self.first_run:
+            blackboard.order = PathPlanner().default_flare_order
+            blackboard.instructions = PathPlanner().compute_flares()
+            self.first_run = False
+
         self.logger.info("")
         self.logger.info("HOLDING FOR TIME...")
         delta_t = self.curr_time - self.init_time
@@ -56,6 +62,18 @@ class MoveDistance(Task):
         self.eqm_time = eqm_time
         self.override_forward_acceleration = override_forward_acceleration
 
+    @staticmethod
+    def custom_acceleration(curr_time, forward_time, expected_acceleration):
+        end_of_rise_acceleration = 2
+        gradient = expected_acceleration / end_of_rise_acceleration
+
+        if (forward_time < end_of_rise_acceleration) or (
+            curr_time > end_of_rise_acceleration
+        ):
+            return expected_acceleration
+        else:
+            return gradient * curr_time
+
     def run(self, blackboard):
         self.logger.info("")
         self.logger.info(f"MOVING {self.distance}M ...")
@@ -74,7 +92,11 @@ class MoveDistance(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                override_forward_acceleration=self.override_forward_acceleration,
+                override_forward_acceleration=MoveDistance.custom_acceleration(
+                    delta_t - self.eqm_time,
+                    forward_time,
+                    self.override_forward_acceleration,
+                ),
             )
         elif (
             delta_t >= self.eqm_time + forward_time
@@ -85,6 +107,73 @@ class MoveDistance(Task):
             )
         else:
             return "done"
+
+        time.sleep(0.1)
+
+        return "running"
+
+
+class Qualification(Task):
+    def __init__(
+        self,
+        outcomes=["done"],
+        distance=13,
+        target_depth=-0.6,
+        depth_threshold=0.2,
+        targetRPY=[0, 0, 0],
+        override_forward_acceleration=3.0,
+    ):
+        super().__init__(outcomes)
+
+        self.distance = distance
+        self.depth_threshold = depth_threshold
+        self.targetXYZ = [0.0, 0.0, target_depth]
+        self.targetRPY = targetRPY
+        self.override_forward_acceleration = override_forward_acceleration
+
+    @staticmethod
+    def custom_acceleration(curr_time, forward_time, expected_acceleration):
+        end_of_rise_acceleration = 2
+        gradient = expected_acceleration / end_of_rise_acceleration
+
+        if (forward_time < end_of_rise_acceleration) or (
+            curr_time > end_of_rise_acceleration
+        ):
+            return expected_acceleration
+        else:
+            return gradient * curr_time
+
+    def run(self, blackboard):
+        self.logger.info("")
+        self.logger.info(f"MOVING {self.distance}M ...")
+
+        delta_t = self.curr_time - self.init_time
+
+        forward_time = 1.675 * self.distance - 1.0722
+
+        if (self.depth <= self.targetXYZ[2] - self.depth_threshold) or (
+            self.depth >= self.targetXYZ[2] + self.depth_threshold
+        ):
+            return "correct_depth"
+
+        if delta_t < forward_time:
+            self.logger.info("ACTUALLY MOVING")
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                override_forward_acceleration=Qualification.custom_acceleration(
+                    delta_t,
+                    forward_time,
+                    self.override_forward_acceleration,
+                ),
+            )
+        elif delta_t >= forward_time:
+            self.logger.info("FINISHED MOVING, JUST HOLD")
+            self.correctVehicle(
+                self.currRPY, self.targetRPY, self.currXYZ, self.targetXYZ
+            )
 
         time.sleep(0.1)
 
@@ -238,7 +327,7 @@ class MoveToObject(Task):
         completion_time_threshold=10.0,
         angle_step=0.02,
         sweeping_angle=np.radians(80),
-        eqm_time=5.0,
+        eqm_time=10.0,
     ):
         super().__init__(outcomes)
 
@@ -258,11 +347,23 @@ class MoveToObject(Task):
         self.total_angle = 0.0
         self.first_detection = True
 
+    @staticmethod
+    def custom_sweep(angle):
+        if angle >= 0 and angle < np.pi / 2:
+            return 0
+        elif angle >= np.pi / 2 and angle < (2.5 * np.pi):
+            return np.sin(angle - np.pi / 2)
+        else:
+            if angle < 0:
+                return MoveToObject.custom_sweep(angle + 2.5 * np.pi)
+            else:
+                return MoveToObject.custom_sweep(angle - 2.5 * np.pi)
+
     def run(self, blackboard):
 
         self.clear_old_cv_data(self.object_name, refresh_time=1.0)
         delta_t = self.curr_time - self.init_time
-        self.logger.info()
+        self.logger.info("")
         self.logger.info(f"CURRENT TIME: {self.curr_time}")
         self.logger.info(f"LAST DETECTED TIME: {self.last_detected_time}")
 
@@ -281,29 +382,13 @@ class MoveToObject(Task):
         elif self.cv_data[self.object_name] is None:
             self.logger.info("NOT DETECTED!")
 
-            # If time since last detection is less than
-            # delay to sweep, search in the direction of
-            # the last detection.
-            # if (
-            #     self.last_detected_time is not None
-            #     and curr_time - self.last_detected_time < self.start_sweep_delay
-            # ):
-            #     self.correctVehicle(
-            #         currRPY,
-            #         self.targetRPY,
-            #         self.currXYZ,
-            #         self.targetXYZ,
-            #         override_forward_acceleration=2.0,
-            #         use_camera_pid=True,
-            #     )
-
             if self.last_detected_time is not None and self.targetRPY[2] > 0:
                 sweep_sign = 1
             else:
                 sweep_sign = -1
 
             self.targetRPY[2] = self.centre_yaw + sweep_sign * (
-                self.sweeping_angle * np.sin(self.total_angle)
+                self.sweeping_angle * MoveToObject.custom_sweep(self.total_angle)
             )
             self.total_angle += self.angle_step
 
@@ -333,7 +418,7 @@ class MoveToObject(Task):
             self.last_detected_time = self.cv_data[self.object_name]["time"]
 
             # Reset sweeping parameters
-            self.centre_yaw = self.currRPY[2]
+            self.centre_yaw = self.currRPY[2] + self.targetRPY[2]
             self.total_angle = 0.0
 
             # Zero curr yaw so that yaw error would be required rotation
@@ -346,7 +431,7 @@ class MoveToObject(Task):
             # If the error in yaw is small or if close to object,
             # the robot can move.
             if (
-                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.1
+                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.5
                 or self.cv_data[self.object_name]["distance"] < self.distance_threshold
             ):
                 # If close to object, just move straight.
@@ -358,7 +443,7 @@ class MoveToObject(Task):
                         targetRPY,
                         self.currXYZ,
                         self.targetXYZ,
-                        override_forward_acceleration=2.0,
+                        override_forward_acceleration=1.5,
                         pid_type="flare",
                     )
 
@@ -370,7 +455,7 @@ class MoveToObject(Task):
                         self.targetRPY,
                         self.currXYZ,
                         self.targetXYZ,
-                        override_forward_acceleration=2.0,
+                        override_forward_acceleration=1.5,
                         pid_type="flare",
                     )
 
@@ -394,9 +479,9 @@ class HitFlare(MoveToObject):
         self,
         flare_number,
         outcomes=["done"],
-        object_name="blue_flare",
+        object_name="yellow_flare",
         target_depth=-1.2,
-        distance_threshold=2,
+        distance_threshold=1,
         targetRPY=[0, 0, 0],
         completion_time_threshold=10,
         angle_step=0.02,
@@ -430,6 +515,7 @@ class HitFlare(MoveToObject):
             self.order = blackboard.order
             self.instructions = blackboard.instructions
             self.targetRPY = [0, 0, self.instructions[self.instruction_number][1]]
+            self.centre_yaw = self.targetRPY[2]
             self.object_name = self.order[self.flare_number]
             self.first_run = False
 

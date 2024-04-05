@@ -21,9 +21,9 @@ class SM(Node):
             "MOVE_THROUGH_QUALI_GATE",
             MoveDistance(
                 outcomes=["done"],
-                distance=11.0,
-                target_depth=-0.9,
-                targetRPY=[0.0, 0.0, np.radians(-10)],
+                distance=0.5,
+                target_depth=-0.2,
+                targetRPY=[0.0, 0.0, np.radians(0)],
                 eqm_time=10,
                 override_forward_acceleration=3.0,
             ),
@@ -37,6 +37,15 @@ class SM(Node):
 
 
 def main(args=None):
+    # delay 20 seconds
+    for i in range(10):
+        subprocess.run(["cansend", "can0", "000#7F7F7F7F7F7F7F7F"])
+        time.sleep(1)
+
+    for i in range(20):
+        subprocess.run(["cansend", "can0", "000#7F7F7F7F7F7F7F7F"])
+        time.sleep(0.5)
+
     rclpy.init(args=args)
 
     try:

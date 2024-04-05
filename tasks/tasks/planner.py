@@ -25,21 +25,21 @@ class PathPlanner:
         # }
 
         self.positions = {
-            "start": np.array([2.5, 0]),
-            "orange_flare": np.array([1.5, 5]),
-            "gate": np.array([2.5, 11]),
-            "gate_in_front": np.array([2.5, 13]),
-            "anchor": np.array([2.5, 15]),
-            "red_flare": np.array([4, 17]),
-            "yellow_flare": np.array([4, 17]),
-            "blue_flare": np.array([4, 17]),
-            "buckets": np.array([4, 17]),
+            "start": np.array([0, 0]),
+            "orange_flare": np.array([-1.0, 7]),
+            "gate": np.array([0, 11]),
+            "gate_in_front": np.array([0, 12.5]),
+            "anchor": np.array([2.0, 14.5]),
+            "red_flare": np.array([4.0, 13.5]),
+            "yellow_flare": np.array([4.0, 15.5]),
+            "blue_flare": np.array([4, 14.5]),
+            "buckets": np.array([0, 17]),
         }
 
         self.default_flare_order = {
-            "first": "blue_flare",
+            "first": "red_flare",
             "second": "yellow_flare",
-            "third": "red_flare",
+            "third": "blue_flare",
         }
 
     def compute_before_flares(self):

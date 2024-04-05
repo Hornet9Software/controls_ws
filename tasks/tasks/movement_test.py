@@ -8,7 +8,7 @@ from tasks.movement_tasks import *
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
 
-flare_depth = -1.2
+flare_depth = -1.1
 
 
 class SM(Node):
@@ -29,21 +29,20 @@ class SM(Node):
             ),
             # transitions={"done": "MOVE_TO_GATE"},
             # transitions={"done": "4_TO_5"},
-            transitions={"done": "ORANGE_FLARE_TO_GATE"},
+            transitions={"done": "HIT_FLARE"},
         )
 
         sm.add_state(
-            "ORANGE_FLARE_TO_GATE",
-            MoveToGate(
+            "HIT_FLARE",
+            HitFlare(
+                flare_number=1,
                 outcomes=["done"],
-                object_name="gate",
-                target_depth=-0.8,
-                distance_threshold=2.5,
-                targetRPY=[0.0, 0.0, 0.0],
-                completion_time_threshold=40.0,
-                angle_step=0.01,
+                target_depth=flare_depth,
+                distance_threshold=1.5,
+                completion_time_threshold=20.0,
+                angle_step=0.02,
             ),
-            transitions={"done": "READ_COMMS_BUOY"},
+            transitions={"done": "finish"},
         )
 
         # sm.add_state(

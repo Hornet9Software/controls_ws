@@ -11,7 +11,7 @@ from tasks.planner import PathPlanner
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
 
-FLARE_DEPTH = -1.0
+FLARE_DEPTH = -1.2
 BUOY_DEPTH = -0.25
 
 
@@ -42,7 +42,7 @@ class SM(Node):
                 distance=self.instructions[0][0],
                 target_depth=FLARE_DEPTH,
                 targetRPY=[0.0, 0.0, self.instructions[0][1]],
-                eqm_time=7,
+                eqm_time=10,
             ),
             transitions={"done": "ORANGE_FLARE_TO_GATE"},
         )
@@ -67,7 +67,7 @@ class SM(Node):
                 distance=self.instructions[2][0],
                 target_depth=FLARE_DEPTH,
                 targetRPY=[0.0, 0.0, self.instructions[2][1]],
-                eqm_time=5,
+                eqm_time=10,
             ),
             transitions={"done": "READ_COMMS_BUOY"},
         )
@@ -102,33 +102,9 @@ class SM(Node):
                 flare_number=1,
                 outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=1.5,
                 completion_time_threshold=40.0,
                 angle_step=0.01,
-            ),
-            transitions={"done": "CLEAR_FLARE_1"},
-        )
-
-        sm.add_state(
-            "CLEAR_FLARE_1",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(-90)],
-                eqm_time=5,
-            ),
-            transitions={"done": "FINISH_CLEAR_FLARE_1"},
-        )
-
-        sm.add_state(
-            "FINISH_CLEAR_FLARE_1",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(90)],
-                eqm_time=5,
             ),
             transitions={"done": "FIRST_FLARE_TO_ANCHOR"},
         )
@@ -150,33 +126,9 @@ class SM(Node):
                 flare_number=2,
                 outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=1.5,
                 completion_time_threshold=40.0,
                 angle_step=0.01,
-            ),
-            transitions={"done": "CLEAR_FLARE_2"},
-        )
-
-        sm.add_state(
-            "CLEAR_FLARE_2",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(-90)],
-                eqm_time=5,
-            ),
-            transitions={"done": "FINISH_CLEAR_FLARE_2"},
-        )
-
-        sm.add_state(
-            "FINISH_CLEAR_FLARE_2",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(90)],
-                eqm_time=5,
             ),
             transitions={"done": "SECOND_FLARE_TO_ANCHOR"},
         )
@@ -198,33 +150,9 @@ class SM(Node):
                 flare_number=3,
                 outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=1.5,
                 completion_time_threshold=40.0,
                 angle_step=0.01,
-            ),
-            transitions={"done": "CLEAR_FLARE_3"},
-        )
-
-        sm.add_state(
-            "CLEAR_FLARE_3",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(-90)],
-                eqm_time=5,
-            ),
-            transitions={"done": "FINISH_CLEAR_FLARE_3"},
-        )
-
-        sm.add_state(
-            "FINISH_CLEAR_FLARE_3",
-            MoveDistance(
-                outcomes=["done"],
-                distance=1,
-                target_depth=FLARE_DEPTH,
-                targetRPY=[0, 0, np.radians(90)],
-                eqm_time=5,
             ),
             transitions={"done": "THIRD_FLARE_TO_BUCKETS"},
         )
