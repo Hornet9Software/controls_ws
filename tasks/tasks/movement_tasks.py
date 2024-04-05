@@ -1,3 +1,4 @@
+import logging
 import time
 from copy import copy, deepcopy
 
@@ -23,7 +24,8 @@ class HoldForTime(Task):
         self.targetRPY = targetRPY
 
     def run(self, blackboard):
-
+        self.logger.info("")
+        self.logger.info("HOLDING FOR TIME...")
         delta_t = self.curr_time - self.init_time
 
         if delta_t > self.time_to_hold:
@@ -55,6 +57,8 @@ class MoveDistance(Task):
         self.override_forward_acceleration = override_forward_acceleration
 
     def run(self, blackboard):
+        self.logger.info("")
+        self.logger.info(f"MOVING {self.distance}M ...")
 
         delta_t = self.curr_time - self.init_time
 
@@ -154,13 +158,13 @@ class MoveToGate(Task):
 
         self.clear_old_cv_data(self.object_name, refresh_time=1.0)
         delta_t = self.curr_time - self.init_time
-        print()
-        print(f"CURRENT TIME: {self.curr_time}")
-        print(f"LAST DETECTED TIME: {self.last_detected_time}")
+        self.logger.info("")
+        self.logger.info(f"CURRENT TIME: {self.curr_time}")
+        self.logger.info(f"LAST DETECTED TIME: {self.last_detected_time}")
 
         # If vehicle needs time to equilibriate at the start,
         if delta_t < self.eqm_time:
-            print("EQUILIBRIATING...")
+            self.logger.info("EQUILIBRIATING...")
             self.correctVehicle(
                 self.currRPY,
                 self.targetRPY,
@@ -212,7 +216,7 @@ class MoveToGate(Task):
             # If the flares are not seen after a long time,
             # they have been knocked down.
             if self.last_detected_time is not None:
-                print("CHECKING IF KNOCKED DOWN...")
+                self.logger.info("CHECKING IF KNOCKED DOWN...")
                 if (
                     self.curr_time - self.last_detected_time
                 ) >= self.completion_time_threshold:
@@ -258,13 +262,13 @@ class MoveToObject(Task):
 
         self.clear_old_cv_data(self.object_name, refresh_time=1.0)
         delta_t = self.curr_time - self.init_time
-        print()
-        print(f"CURRENT TIME: {self.curr_time}")
-        print(f"LAST DETECTED TIME: {self.last_detected_time}")
+        self.logger.info()
+        self.logger.info(f"CURRENT TIME: {self.curr_time}")
+        self.logger.info(f"LAST DETECTED TIME: {self.last_detected_time}")
 
         # If vehicle needs time to equilibriate at the start,
         if delta_t < self.eqm_time:
-            print("EQUILIBRIATING...")
+            self.logger.info("EQUILIBRIATING...")
             self.correctVehicle(
                 self.currRPY,
                 self.targetRPY,
@@ -275,7 +279,7 @@ class MoveToObject(Task):
 
         # Else if object is not detected,
         elif self.cv_data[self.object_name] is None:
-            print("NOT DETECTED!")
+            self.logger.info("NOT DETECTED!")
 
             # If time since last detection is less than
             # delay to sweep, search in the direction of
@@ -314,7 +318,7 @@ class MoveToObject(Task):
             # If the flares are not seen after a long time,
             # they have been knocked down.
             if self.last_detected_time is not None:
-                print("CHECKING IF KNOCKED DOWN...")
+                self.logger.info("CHECKING IF KNOCKED DOWN...")
                 if (
                     self.curr_time - self.last_detected_time
                 ) >= self.completion_time_threshold:
@@ -322,7 +326,7 @@ class MoveToObject(Task):
 
         # If the object is detected,
         else:
-            print("DETECTED!")
+            self.logger.info("DETECTED!")
 
             # Update target yaw and last detected time
             self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
@@ -337,7 +341,7 @@ class MoveToObject(Task):
             currRPY = copy(self.currRPY)
             currRPY[2] = 0.0
 
-            print(self.cv_data[self.object_name]["distance"])
+            # print(self.cv_data[self.object_name]["distance"])
 
             # If the error in yaw is small or if close to object,
             # the robot can move.
@@ -460,7 +464,7 @@ class ReadCommsBuoy(Task):
 
         # If vehicle needs time to equilibriate at the start,
         if delta_t < self.eqm_time:
-            print("EQUILIBRIATING...")
+            self.logger.info("EQUILIBRIATING...")
             self.correctVehicle(
                 self.currRPY,
                 self.targetRPY,
@@ -471,7 +475,7 @@ class ReadCommsBuoy(Task):
 
         # else if led not detected yet...
         elif self.flare_order is None:
-            print("LED NOT DETECTED!")
+            self.logger.info("LED NOT DETECTED!")
 
             self.targetRPY[2] = self.centre_yaw + (
                 self.sweeping_angle * np.sin(self.total_angle)
@@ -494,8 +498,8 @@ class ReadCommsBuoy(Task):
 
         # If the object is detected,
         else:
-            print("LED DETECTED!")
-            print(f"FLARE ORDER: {self.flare_order}")
+            self.logger.info("LED DETECTED!")
+            self.logger.info(f"FLARE ORDER: {self.flare_order}")
             blackboard.order = self.flare_order
             blackboard.instructions = PathPlanner().compute_flares(self.flare_order)
             return "done"

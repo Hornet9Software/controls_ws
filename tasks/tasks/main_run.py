@@ -1,4 +1,5 @@
 import json
+import logging
 import subprocess
 import time
 
@@ -55,7 +56,6 @@ class SM(Node):
                 distance_threshold=2.5,
                 targetRPY=[0.0, 0.0, self.instructions[1][1]],
                 completion_time_threshold=20.0,
-                angle_step=0.01,
             ),
             transitions={"done": "MOVE_IN_FRONT_OF_GATE"},
         )
@@ -189,6 +189,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     try:
+        logging.info("STARTED MAIN RUN...")
         Task.init_task_state()
         state_machine = SM()
         state_machine.join_spin()

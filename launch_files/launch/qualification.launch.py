@@ -16,8 +16,8 @@ from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 # This function is always needed
 def generate_launch_description():
-    movement_test = Node(package="tasks", executable="movement_test")
+    qualification_run = Node(package="tasks", executable="qualification_run")
 
-    ld = [movement_test]
+    ld = [qualification_run]
 
     return LaunchDescription(ld)
