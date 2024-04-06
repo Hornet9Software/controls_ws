@@ -36,7 +36,7 @@ thruster_biases = np.array([1.0,    # Front Left
                             1.0,    # Rear Right
                             1.0,    # Middle Left
                             1.0,    # Middle Right
-                            1.0,])  # Middle Middle
+                            1.4,])  # Middle Middle
 
 thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1

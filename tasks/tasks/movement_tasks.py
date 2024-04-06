@@ -9,6 +9,18 @@ from tasks.planner import PathPlanner
 from tasks.task import Task
 
 
+class InitTasks(Task):
+    def __init__(self, outcomes):
+        super().__init__(outcomes)
+
+    def run(self, blackboard):
+        blackboard.order = PathPlanner().default_flare_order
+        blackboard.instructions = PathPlanner().compute_flares()
+        blackboard.attempted_flares = []
+
+        return "done"
+
+
 class HoldForTime(Task):
     def __init__(
         self,
@@ -22,13 +34,8 @@ class HoldForTime(Task):
         self.time_to_hold = time_to_hold
         self.targetXYZ = [0.0, 0.0, target_depth]
         self.targetRPY = targetRPY
-        self.first_run = True
 
     def run(self, blackboard):
-        if self.first_run:
-            blackboard.order = PathPlanner().default_flare_order
-            blackboard.instructions = PathPlanner().compute_flares()
-            self.first_run = False
 
         self.logger.info("")
         self.logger.info("HOLDING FOR TIME...")
@@ -92,11 +99,12 @@ class MoveDistance(Task):
                 self.targetRPY,
                 self.currXYZ,
                 self.targetXYZ,
-                override_forward_acceleration=MoveDistance.custom_acceleration(
-                    delta_t - self.eqm_time,
-                    forward_time,
-                    self.override_forward_acceleration,
-                ),
+                override_forward_acceleration=self.override_forward_acceleration,
+                # override_forward_acceleration=MoveDistance.custom_acceleration(
+                #     delta_t - self.eqm_time,
+                #     forward_time,
+                #     self.override_forward_acceleration,
+                # ),
             )
         elif (
             delta_t >= self.eqm_time + forward_time
@@ -326,7 +334,7 @@ class MoveToObject(Task):
         targetRPY=[0, 0, 0],
         completion_time_threshold=10.0,
         angle_step=0.02,
-        sweeping_angle=np.radians(80),
+        sweeping_angle=np.radians(360),
         eqm_time=10.0,
     ):
         super().__init__(outcomes)
@@ -431,7 +439,7 @@ class MoveToObject(Task):
             # If the error in yaw is small or if close to object,
             # the robot can move.
             if (
-                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.5
+                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.4
                 or self.cv_data[self.object_name]["distance"] < self.distance_threshold
             ):
                 # If close to object, just move straight.
@@ -483,9 +491,9 @@ class HitFlare(MoveToObject):
         target_depth=-1.2,
         distance_threshold=1,
         targetRPY=[0, 0, 0],
-        completion_time_threshold=10,
-        angle_step=0.02,
-        sweeping_angle=np.radians(80),
+        completion_time_threshold=30,
+        angle_step=0.03,
+        sweeping_angle=np.radians(360),
         eqm_time=5,
     ):
         super().__init__(
@@ -502,8 +510,8 @@ class HitFlare(MoveToObject):
 
         self.instruction_number = {
             1: 0,
-            2: 2,
-            3: 4,
+            2: 1,
+            3: 2,
         }[flare_number]
 
         self.flare_number = {1: "first", 2: "second", 3: "third"}[flare_number]
@@ -522,14 +530,213 @@ class HitFlare(MoveToObject):
         return super().run(blackboard)
 
 
+class LazyHitFlare(Task):
+    def __init__(
+        self,
+        outcomes=["done"],
+        target_depth=-1.2,
+        distance_threshold=2,
+        targetRPY=[0, 0, 0],
+        completion_time_threshold=30.0,
+        angle_step=0.03,
+        sweeping_angle=np.radians(360),
+        eqm_time=5.0,
+    ):
+        super().__init__(outcomes)
+
+        # Load parameters
+        self.object_name = None
+        self.targetXYZ = [0.0, 0.0, target_depth]
+        self.targetRPY = targetRPY
+        self.targetRPY[2] = self.currRPY[2]
+        self.distance_threshold = distance_threshold
+        self.completion_time_threshold = completion_time_threshold
+        self.angle_step = angle_step
+        self.sweeping_angle = sweeping_angle
+        self.eqm_time = eqm_time
+
+        # Init variables
+        self.last_detected_time = None
+        self.centre_yaw = self.targetRPY[2]
+        self.total_angle = 0.0
+        self.first_run = True
+
+    @staticmethod
+    def custom_sweep(angle):
+        if angle >= 0 and angle < np.pi / 2:
+            return 0
+        elif angle >= np.pi / 2 and angle < (2.5 * np.pi):
+            return np.sin(angle - np.pi / 2)
+        else:
+            if angle < 0:
+                return MoveToObject.custom_sweep(angle + 2.5 * np.pi)
+            else:
+                return MoveToObject.custom_sweep(angle - 2.5 * np.pi)
+
+    def run(self, blackboard):
+        self.clear_old_cv_data("red_flare", refresh_time=1.0)
+        self.clear_old_cv_data("yellow_flare", refresh_time=1.0)
+        self.clear_old_cv_data("blue_flare", refresh_time=1.0)
+
+        delta_t = self.curr_time - self.init_time
+        self.logger.info("")
+        self.logger.info(f"CURRENT TIME: {self.curr_time}")
+        self.logger.info(f"LAST DETECTED TIME: {self.last_detected_time}")
+
+        # If vehicle needs time to equilibriate at the start,
+        if delta_t < self.eqm_time:
+            self.logger.info("EQUILIBRIATING...")
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                pid_type="flare",
+            )
+
+        elif self.last_detected_time is None:
+            # wait for detection
+            if (
+                self.cv_data["yellow_flare"] is not None
+                and "yellow_flare" not in blackboard.attempted_flares
+            ):
+                self.object_name = "yellow_flare"
+                self.last_detected_time = time.time()
+                blackboard.attempted_flares.append("yellow_flare")
+
+            elif (
+                self.cv_data["red_flare"] is not None
+                and "red_flare" not in blackboard.attempted_flares
+            ):
+                self.object_name = "red_flare"
+                self.last_detected_time = time.time()
+                blackboard.attempted_flares.append("red_flare")
+
+            elif (
+                self.cv_data["blue_flare"] is not None
+                and "blue_flare" not in blackboard.attempted_flares
+            ):
+                self.object_name = "blue_flare"
+                self.last_detected_time = time.time()
+                blackboard.attempted_flares.append("blue_flare")
+
+            else:
+                self.logger.info("NO LOCK ON!")
+
+                self.targetRPY[2] = self.centre_yaw + (
+                    self.sweeping_angle * MoveToObject.custom_sweep(self.total_angle)
+                )
+                self.total_angle += self.angle_step
+
+                self.correctVehicle(
+                    self.currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    pid_type="flare",
+                )
+
+        # Else if object is not detected, but locked on
+        elif self.cv_data[self.object_name] is None:
+            self.logger.info("NOT DETECTED!")
+
+            if self.targetRPY[2] > 0:
+                sweep_sign = 1
+            else:
+                sweep_sign = -1
+
+            self.targetRPY[2] = self.centre_yaw + sweep_sign * (
+                self.sweeping_angle * MoveToObject.custom_sweep(self.total_angle)
+            )
+            self.total_angle += self.angle_step
+
+            self.correctVehicle(
+                self.currRPY,
+                self.targetRPY,
+                self.currXYZ,
+                self.targetXYZ,
+                pid_type="flare",
+            )
+
+            # If the flares are not seen after a long time,
+            # they have been knocked down.
+            self.logger.info("CHECKING IF KNOCKED DOWN...")
+            if (
+                self.curr_time - self.last_detected_time
+            ) >= self.completion_time_threshold:
+                return "done"
+
+        # If the object is detected,
+        else:
+            self.logger.info("DETECTED!")
+
+            # Update target yaw and last detected time
+            self.targetRPY[2] = self.cv_data[self.object_name]["bearing"]
+            self.last_detected_time = self.cv_data[self.object_name]["time"]
+
+            # Reset sweeping parameters
+            self.centre_yaw = self.currRPY[2] + self.targetRPY[2]
+            self.total_angle = 0.0
+
+            # Zero curr yaw so that yaw error would be required rotation
+            # to face object.
+            currRPY = copy(self.currRPY)
+            currRPY[2] = 0.0
+
+            # If the error in yaw is small or if close to object,
+            # the robot can move.
+            if (
+                angle_abs_error(self.targetRPY[2], currRPY[2]) < 0.4
+                or self.cv_data[self.object_name]["distance"] < self.distance_threshold
+            ):
+                # If close to object, just move straight.
+                if self.cv_data[self.object_name]["distance"] < self.distance_threshold:
+                    # set yaw angular acceleration to 0
+                    targetRPY = [0, 0, 0]
+                    self.correctVehicle(
+                        currRPY,
+                        targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                        override_forward_acceleration=1.5,
+                        pid_type="flare",
+                    )
+
+                # If not close to object and error in yaw is small, correct angle
+                # and move at the same time.
+                else:
+                    self.correctVehicle(
+                        currRPY,
+                        self.targetRPY,
+                        self.currXYZ,
+                        self.targetXYZ,
+                        override_forward_acceleration=1.5,
+                        pid_type="flare",
+                    )
+
+            # Otherwise, correct the angle but don't move the robot.
+            else:
+                self.correctVehicle(
+                    currRPY,
+                    self.targetRPY,
+                    self.currXYZ,
+                    self.targetXYZ,
+                    pid_type="flare",
+                )
+
+        time.sleep(0.1)
+
+        return "running"
+
+
 class ReadCommsBuoy(Task):
     def __init__(
         self,
         outcomes=["done"],
         target_depth=-0.5,
         targetRPY=[0, 0, 0],
-        wait_before_abort=50.0,
-        eqm_time=5.0,
+        wait_before_abort=15.0,
+        eqm_time=7.0,
     ):
         super().__init__(outcomes)
 
@@ -540,7 +747,7 @@ class ReadCommsBuoy(Task):
         self.eqm_time = eqm_time
 
         self.angle_step = 0.05
-        self.sweeping_angle = np.radians(30)
+        self.sweeping_angle = np.radians(45)
         self.centre_yaw = self.targetRPY[2]
         self.total_angle = 0.0
 

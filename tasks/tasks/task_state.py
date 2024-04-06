@@ -1,4 +1,5 @@
 import threading
+import time
 
 import numpy as np
 import rclpy
@@ -101,6 +102,14 @@ class TaskState(Node):
             self._on_receive_cv_data_red_drum,
             100,
         )
+
+        self.init_time = None
+
+    def set_init_time(self):
+        self.init_time = time.time()
+
+    def get_init_time(self):
+        return self.init_time
 
     def stop_spinning(self):
         self.destroy_node()

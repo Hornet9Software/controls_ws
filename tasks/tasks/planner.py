@@ -25,20 +25,20 @@ class PathPlanner:
         # }
 
         self.positions = {
-            "start": np.array([0, 0]),
-            "orange_flare": np.array([-1.0, 7]),
-            "gate": np.array([0, 11]),
-            "gate_in_front": np.array([0, 12.5]),
-            "anchor": np.array([2.0, 14.5]),
-            "red_flare": np.array([4.0, 13.5]),
-            "yellow_flare": np.array([4.0, 15.5]),
-            "blue_flare": np.array([4, 14.5]),
-            "buckets": np.array([0, 17]),
+            "start": np.array([-1.625, 0]),
+            "orange_flare": np.array([-2.625, 6.25]),
+            "gate": np.array([0, 9.5]),
+            "gate_in_front": np.array([0, 10.5]),
+            "anchor": np.array([9, 15.875]),
+            "red_flare": np.array([11, 15.875]),
+            "yellow_flare": np.array([12.75, 18.5]),
+            "blue_flare": np.array([13.25, 12.625]),
+            "buckets": np.array([-3.5, 23]),
         }
 
         self.default_flare_order = {
-            "first": "red_flare",
-            "second": "yellow_flare",
+            "first": "yellow_flare",
+            "second": "red_flare",
             "third": "blue_flare",
         }
 
@@ -69,28 +69,19 @@ class PathPlanner:
         anchor_to_first_flare = (
             self.positions[order["first"]] - self.positions["anchor"]
         )
-        first_flare_to_anchor = -anchor_to_first_flare
 
-        anchor_to_second_flare = (
-            self.positions[order["second"]] - self.positions["anchor"]
-        )
-        second_flare_to_anchor = -anchor_to_second_flare
-
-        anchor_to_third_flare = (
-            self.positions[order["third"]] - self.positions["anchor"]
+        first_flare_to_second_flare = (
+            self.positions[order["second"]] - self.positions[order["first"]]
         )
 
-        third_flare_to_buckets = (
-            self.positions["buckets"] - self.positions[order["third"]]
+        second_flare_to_third_flare = (
+            self.positions[order["third"]] - self.positions[order["second"]]
         )
 
         sequence = [
             anchor_to_first_flare,
-            first_flare_to_anchor,
-            anchor_to_second_flare,
-            second_flare_to_anchor,
-            anchor_to_third_flare,
-            third_flare_to_buckets,
+            first_flare_to_second_flare,
+            second_flare_to_third_flare,
         ]
 
         return self.compute_polar(sequence)

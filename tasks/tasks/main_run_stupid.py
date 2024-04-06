@@ -125,11 +125,11 @@ class SM(Node):
 
         sm.add_state(
             "FIRST_FLARE",
-            HitFlare(
-                flare_number=1,
-                outcomes=["done", "restart", "end"],
+            LazyHitFlare(
+                outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=2.0,
+                targetRPY=[0, 0, np.radians(90)],
                 completion_time_threshold=30.0,
                 angle_step=0.03,
             ),
@@ -142,11 +142,11 @@ class SM(Node):
 
         sm.add_state(
             "SECOND_FLARE",
-            HitFlare(
-                flare_number=2,
-                outcomes=["done", "restart", "end"],
+            LazyHitFlare(
+                outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=2.0,
+                targetRPY=[0, 0, np.radians(90)],
                 completion_time_threshold=30.0,
                 angle_step=0.03,
             ),
@@ -159,11 +159,11 @@ class SM(Node):
 
         sm.add_state(
             "THIRD_FLARE",
-            HitFlare(
-                flare_number=3,
-                outcomes=["done", "restart", "end"],
+            LazyHitFlare(
+                outcomes=["done"],
                 target_depth=FLARE_DEPTH,
-                distance_threshold=2,
+                distance_threshold=2.0,
+                targetRPY=[0, 0, np.radians(90)],
                 completion_time_threshold=30.0,
                 angle_step=0.03,
             ),

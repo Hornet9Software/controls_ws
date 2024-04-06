@@ -12,7 +12,7 @@ from yasmin_viewer import YasminViewerPub
 
 class SM(Node):
 
-    DEPTH = -0.25
+    DEPTH = -0.35
 
     def __init__(self):
         super().__init__("task_node")
@@ -34,10 +34,10 @@ class SM(Node):
             "QUALIFICATION",
             Qualification(
                 outcomes=["correct_depth", "done"],
-                distance=4.819,
+                distance=15,
                 target_depth=SM.DEPTH,
                 depth_threshold=0.2,
-                targetRPY=[0, 0, np.radians(12)],
+                targetRPY=[0, 0, 0],
                 override_forward_acceleration=3,
             ),
             transitions={

@@ -14,6 +14,7 @@ class Task(State):
     PID_MANAGER_PROVIDER = providers.Singleton(NormalPIDManager)
     GATE_PID_MANAGER_PROVIDER = providers.Singleton(GatePIDManager)
     FLARE_PID_MANAGER_PROVIDER = providers.Singleton(FlarePIDManager)
+    RUN_TIME_CAP = 5
 
     def __init__(self, outcomes):
 
@@ -30,6 +31,8 @@ class Task(State):
     @classmethod
     def init_task_state(cls):
         task_state = cls.TASK_STATE_PROVIDER()
+
+        task_state.set_init_time()
         # executor = rclpy.executors.MultiThreadedExecutor()
         # executor.add_node(task_state)
         # executor_thread = threading.Thread(target=executor.spin, daemon=True)
@@ -69,8 +72,15 @@ class Task(State):
 
     def execute(self, blackboard):
         self.init_time = time.time()
+
         while True:
             self.curr_time = time.time()
+
+            if (self.curr_time - self.task_state.get_init_time()) > (self.RUN_TIME_CAP * 60):
+                return "end"
+
+            if self.depth > 0:
+                return "restart"
 
             out = self.run(blackboard)
             if out != "running":

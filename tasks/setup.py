@@ -21,6 +21,7 @@ setup(
         "console_scripts": [
             "movement_test = tasks.movement_test:main",
             "main_run = tasks.main_run:main",
+            "main_run_stupid = tasks.main_run_stupid:main",
             "qualification_run = tasks.quali_run:main",
             "qualification_run_two = tasks.quali_run_state:main",
         ],
