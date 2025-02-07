@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/dell/workspaces/ros2_ws/install/bb_localization/include/**",
+        "/home/dell/workspaces/ros2_ws/install/frames/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_uav_msgs/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_sensor_msgs/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_planner_msgs/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_msgs/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_controls_msgs/include/**",
+        "/home/dell/workspaces/ros2_ws/install/bb_asv_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/dell/workspaces/ros2_ws/src/controlkit/include/**",
+        "/home/dell/workspaces/ros2_ws/src/controls/include/**",
+        "/home/dell/workspaces/ros2_ws/src/frames/include/**",
+        "/home/dell/workspaces/ros2_ws/src/localization/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

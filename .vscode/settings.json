@@ -1,0 +1,24 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/dell/workspaces/ros2_ws/install/bb_localization/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_uav_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_sensor_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_planner_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_controls_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_asv_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/dell/workspaces/ros2_ws/install/bb_localization/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_uav_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_sensor_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_planner_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_controls_msgs/local/lib/python3.10/dist-packages",
+        "/home/dell/workspaces/ros2_ws/install/bb_asv_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
